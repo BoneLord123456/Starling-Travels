@@ -6,8 +6,8 @@ import react from '@vitejs/plugin-react';
 export default defineConfig({
   plugins: [react()],
   define: {
-    // Vite does not expose process.env by default. 
-    // This mapping ensures the Gemini API can access the key via process.env.API_KEY.
+    // This allows process.env.API_KEY to be accessed in the client code
+    // while Vite is bundling. Vercel will provide the API_KEY from its dashboard.
     'process.env.API_KEY': JSON.stringify(process.env.API_KEY),
   },
   server: {
