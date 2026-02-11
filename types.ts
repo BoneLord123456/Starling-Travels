@@ -71,11 +71,16 @@ export interface Booking {
   status: 'pending' | 'paid' | 'completed';
 }
 
-export interface UserProfile {
+export interface User {
   name: string;
   email: string;
-  theme: 'light' | 'dark' | 'system';
+  passwordHash?: string; // Simulated secure storage
   isPremium: boolean;
+  joinedDate: string;
+}
+
+export interface UserProfile extends User {
+  theme: 'light' | 'dark' | 'system';
   bookings: Booking[];
   badges: string[];
   ecoImpactRating: number;

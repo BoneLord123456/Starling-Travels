@@ -37,27 +37,33 @@ const Discover = () => {
       return 0;
     });
 
+  const handleImageError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
+    const target = e.target as HTMLImageElement;
+    // Fallback to a generic high-quality travel image if specific one fails
+    target.src = "https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&w=800&q=80";
+  };
+
   return (
-    <div className="p-4 space-y-6">
+    <div className="p-4 space-y-6 animate-in fade-in duration-500">
       <section className="space-y-4">
         <div className="flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Travel Safe</h1>
+          <h1 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">Eco Explorer</h1>
           {!isPremium ? (
-            <Link to="/premium" className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 rounded-lg text-xs font-bold border border-amber-200">
+            <Link to="/premium" className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 rounded-lg text-xs font-bold border border-amber-200 dark:border-amber-800 transition-transform active:scale-95">
               <Crown size={14} /> Get Premium
             </Link>
           ) : (
-            <div className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 rounded-lg text-xs font-bold border border-emerald-200">
+            <div className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 rounded-lg text-xs font-bold border border-emerald-200 dark:border-emerald-800">
               <Sparkles size={14} /> Premium Active
             </div>
           )}
         </div>
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
+        <div className="relative group">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-emerald-500 transition-colors" size={20} />
           <input 
             type="text" 
-            placeholder="Search verified destinations..." 
-            className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+            placeholder="Search 80+ global destinations..." 
+            className="w-full pl-10 pr-4 py-3 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 focus:outline-none focus:ring-4 focus:ring-emerald-500/10 dark:text-white transition-all shadow-sm"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
@@ -70,63 +76,68 @@ const Discover = () => {
         </div>
       </section>
 
-      <section className="grid gap-6">
+      <section className="grid gap-6 sm:grid-cols-2">
         {filtered.map((dest) => {
           const isPriority = isPremium && dest.status === 'Recommended';
           return (
             <Link 
               key={dest.id} 
               to={`/destination/${dest.id}`}
-              className={`group relative bg-white dark:bg-slate-900 rounded-2xl overflow-hidden border transition-all ${
-                isPriority ? 'border-emerald-500 ring-2 ring-emerald-500/10' : 'border-slate-200 dark:border-slate-800'
-              } hover:shadow-xl`}
+              className={`group relative bg-white dark:bg-slate-900 rounded-3xl overflow-hidden border transition-all duration-300 ${
+                isPriority ? 'border-emerald-500 ring-4 ring-emerald-500/5' : 'border-slate-200 dark:border-slate-800'
+              } hover:shadow-2xl hover:-translate-y-1`}
             >
-              <div className="h-48 overflow-hidden relative">
-                <img src={dest.image} alt={dest.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+              <div className="h-56 overflow-hidden relative">
+                <img 
+                  src={dest.image} 
+                  alt={dest.name} 
+                  onError={handleImageError}
+                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" 
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
                 
                 {isPriority && (
-                  <div className="absolute top-4 right-4 bg-emerald-500 text-white px-2 py-1 rounded-full text-[10px] font-black uppercase flex items-center gap-1 shadow-lg">
+                  <div className="absolute top-4 right-4 bg-emerald-500 text-white px-3 py-1 rounded-full text-[10px] font-black uppercase flex items-center gap-1 shadow-lg z-10">
                     <Sparkles size={10} /> Safe Haven
                   </div>
                 )}
 
-                <div className="absolute top-4 left-4 flex gap-2">
+                <div className="absolute top-4 left-4 flex gap-2 z-10">
                   <ScoreBadge status={dest.status} size="sm" />
                 </div>
 
-                <div className="absolute bottom-4 left-4 text-white">
-                  <div className="text-xs font-bold opacity-80 uppercase tracking-widest">{dest.country}</div>
-                  <div className="text-xl font-bold">{dest.name}</div>
+                <div className="absolute bottom-4 left-4 text-white z-10">
+                  <div className="text-[10px] font-black opacity-80 uppercase tracking-[0.2em]">{dest.country}</div>
+                  <div className="text-2xl font-black tracking-tight">{dest.name}</div>
                 </div>
                 
-                <div className="absolute top-4 right-4 bg-black/40 backdrop-blur-md px-2 py-1 rounded text-white text-[10px] font-bold border border-white/20">
+                <div className="absolute top-4 right-4 bg-black/60 backdrop-blur-md px-3 py-1 rounded-xl text-white text-[10px] font-black border border-white/20 z-0">
                   ${dest.baseCostPerDay}/day
                 </div>
               </div>
               
-              <div className="p-4">
-                <p className="text-slate-500 dark:text-slate-400 text-sm line-clamp-2 mb-4 leading-relaxed">
+              <div className="p-5 space-y-4">
+                <p className="text-slate-500 dark:text-slate-400 text-sm line-clamp-2 leading-relaxed font-medium">
                   {dest.description}
                 </p>
 
-                <div className="flex justify-between items-center">
+                <div className="flex justify-between items-center pt-2 border-t border-slate-50 dark:border-slate-800">
                   <div className="flex gap-4">
                     <div className="flex flex-col items-center">
-                      <Wind size={14} className={dest.metrics.airQualityAQI < 50 ? 'text-indigo-500' : 'text-slate-400'} />
-                      <span className="text-[10px] text-slate-400 font-bold mt-1 uppercase">{dest.metrics.airQualityAQI} AQI</span>
+                      <Wind size={16} className={dest.metrics.airQualityAQI < 50 ? 'text-emerald-500' : dest.metrics.airQualityAQI < 100 ? 'text-amber-500' : 'text-rose-500'} />
+                      <span className="text-[9px] text-slate-400 dark:text-slate-500 font-black mt-1 uppercase tracking-tighter">{Math.round(dest.metrics.airQualityAQI)} AQI</span>
                     </div>
                     <div className="flex flex-col items-center">
-                      <Users size={14} className={dest.metrics.crowdDensity < 1 ? 'text-indigo-500' : 'text-slate-400'} />
-                      <span className="text-[10px] text-slate-400 font-bold mt-1 uppercase">{dest.metrics.crowdDensity}/m²</span>
+                      <Users size={16} className={dest.metrics.crowdDensity < 1 ? 'text-emerald-500' : 'text-rose-500'} />
+                      <span className="text-[9px] text-slate-400 dark:text-slate-500 font-black mt-1 uppercase tracking-tighter">{dest.metrics.crowdDensity.toFixed(1)}/m²</span>
                     </div>
                     <div className="flex flex-col items-center">
-                      <Volume2 size={14} className={dest.metrics.noiseDB < 50 ? 'text-indigo-500' : 'text-slate-400'} />
-                      <span className="text-[10px] text-slate-400 font-bold mt-1 uppercase">{dest.metrics.noiseDB} dB</span>
+                      <Volume2 size={16} className={dest.metrics.noiseDB < 50 ? 'text-emerald-500' : 'text-rose-500'} />
+                      <span className="text-[9px] text-slate-400 dark:text-slate-500 font-black mt-1 uppercase tracking-tighter">{Math.round(dest.metrics.noiseDB)} dB</span>
                     </div>
                   </div>
-                  <div className="flex items-center gap-1 text-indigo-600 dark:text-indigo-400 font-bold text-sm">
-                    View Safest Plan <ArrowRight size={16} />
+                  <div className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-black text-xs uppercase tracking-widest group-hover:gap-2 transition-all">
+                    Detail <ArrowRight size={14} />
                   </div>
                 </div>
               </div>
@@ -141,10 +152,10 @@ const Discover = () => {
 const FilterButton = ({ active, onClick, label, icon }: { active: boolean, onClick: () => void, label: string, icon?: any }) => (
   <button 
     onClick={onClick}
-    className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all border ${
+    className={`flex items-center gap-1.5 px-5 py-2.5 rounded-2xl text-[10px] font-black uppercase tracking-widest whitespace-nowrap transition-all border ${
       active 
-        ? 'bg-indigo-600 text-white border-indigo-600 shadow-lg shadow-indigo-100 dark:shadow-none' 
-        : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-800'
+        ? 'bg-emerald-600 text-white border-emerald-600 shadow-xl shadow-emerald-200 dark:shadow-none' 
+        : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-800 hover:border-emerald-300'
     }`}
   >
     {icon}

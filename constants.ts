@@ -1,230 +1,175 @@
 
-import { Destination, TourGuide, TravelRoute } from './types';
+import { Destination, TourGuide, TravelRoute, CommunityComment } from './types';
 
-export const MOCK_GUIDES: Record<string, TourGuide[]> = {
-  'venice-italy': [
-    {
-      id: 'g1',
-      name: 'Alessandro V.',
-      avatar: 'https://i.pravatar.cc/150?u=g1',
-      languages: ['Italian', 'English'],
-      expertise: ['History', 'Secret Canals'],
-      rating: 4.9,
-      reviewCount: 124,
-      pricePerDay: 120,
-      isSustainabilityCertified: true,
-      bio: "Local historian dedicated to showing the real Venice."
-    },
-    {
-      id: 'gp1',
-      name: 'Isabella R.',
-      avatar: 'https://i.pravatar.cc/150?u=gp1',
-      languages: ['Italian', 'English', 'German'],
-      expertise: ['Sustainable Architecture', 'Luxury Art'],
-      rating: 5.0,
-      reviewCount: 45,
-      pricePerDay: 250,
-      isSustainabilityCertified: true,
-      isPremiumOnly: true,
-      bio: "Exclusive high-access tours for discerning travelers."
-    }
-  ],
-  'kyoto-japan': [
-    {
-      id: 'g3',
-      name: 'Kenji S.',
-      avatar: 'https://i.pravatar.cc/150?u=g3',
-      languages: ['Japanese', 'English'],
-      expertise: ['Zen Gardens', 'Temples'],
-      rating: 5.0,
-      reviewCount: 210,
-      pricePerDay: 150,
-      isSustainabilityCertified: true,
-      bio: "Spiritual guide focusing on mindful tourism."
-    }
-  ],
-  'lofoten-norway': [
-    {
-      id: 'g4',
-      name: 'Ingrid L.',
-      avatar: 'https://i.pravatar.cc/150?u=g4',
-      languages: ['Norwegian', 'English'],
-      expertise: ['Arctic Trekking', 'Fjord Navigation'],
-      rating: 5.0,
-      reviewCount: 142,
-      pricePerDay: 180,
-      isSustainabilityCertified: true,
-      bio: "Expert on Arctic preservation and local fishing traditions."
-    }
-  ],
-  'azores-portugal': [
-    {
-      id: 'g5',
-      name: 'Manuel S.',
-      avatar: 'https://i.pravatar.cc/150?u=g5',
-      languages: ['Portuguese', 'English'],
-      expertise: ['Ocean Science', 'Hiking'],
-      rating: 4.8,
-      reviewCount: 67,
-      pricePerDay: 90,
-      isSustainabilityCertified: true,
-      bio: "Passionate about marine conservation."
-    }
-  ],
-  'faroe-islands': [
-    {
-      id: 'g6',
-      name: 'Erik H.',
-      avatar: 'https://i.pravatar.cc/150?u=g6',
-      languages: ['Faroese', 'English', 'Danish'],
-      expertise: ['Bird Watching', 'Photography'],
-      rating: 4.9,
-      reviewCount: 28,
-      pricePerDay: 180,
-      isSustainabilityCertified: true,
-      bio: "Capturing the wild beauty of the Faroes."
-    }
-  ],
-  'santorini-greece': [
-    {
-      id: 'g7',
-      name: 'Eleni K.',
-      avatar: 'https://i.pravatar.cc/150?u=g7',
-      languages: ['Greek', 'English'],
-      expertise: ['Geology', 'Wine'],
-      rating: 4.7,
-      reviewCount: 156,
-      pricePerDay: 110,
-      isSustainabilityCertified: false,
-      bio: "Exploring the volcanic history of the caldera."
-    }
-  ]
+// Helper for mock feedback
+const getFeedback = (destName: string): CommunityComment[] => [
+  { id: `${destName}-f1`, user: 'EcoTraveler', comment: `Amazing experience in ${destName}. Very clean and safe.`, date: '2024-03-10', rating: 5 },
+  { id: `${destName}-f2`, user: 'GlobalNomad', comment: `Great spots but slightly crowded near the main landmarks.`, date: '2024-03-05', rating: 4 }
+];
+
+// Helper to generate consistent yet varied metrics for large lists
+const getMetrics = (type: 'nature' | 'urban' | 'industrial' | 'remote') => {
+  switch (type) {
+    case 'nature':
+      return { airQualityAQI: 15 + Math.random() * 20, waterPPM: 30 + Math.random() * 40, soilPPM: 10 + Math.random() * 20, noiseDB: 30 + Math.random() * 15, crowdDensity: 0.1 + Math.random() * 0.4, infraLoad: 10 + Math.random() * 20 };
+    case 'urban':
+      return { airQualityAQI: 60 + Math.random() * 60, waterPPM: 150 + Math.random() * 100, soilPPM: 80 + Math.random() * 80, noiseDB: 65 + Math.random() * 20, crowdDensity: 1.5 + Math.random() * 2.5, infraLoad: 60 + Math.random() * 30 };
+    case 'industrial':
+      return { airQualityAQI: 140 + Math.random() * 100, waterPPM: 400 + Math.random() * 200, soilPPM: 200 + Math.random() * 150, noiseDB: 80 + Math.random() * 15, crowdDensity: 2.0 + Math.random() * 2.0, infraLoad: 85 + Math.random() * 15 };
+    case 'remote':
+      return { airQualityAQI: 5 + Math.random() * 10, waterPPM: 10 + Math.random() * 20, soilPPM: 5 + Math.random() * 10, noiseDB: 20 + Math.random() * 10, crowdDensity: 0.05 + Math.random() * 0.1, infraLoad: 5 + Math.random() * 10 };
+    default:
+      return { airQualityAQI: 50, waterPPM: 100, soilPPM: 50, noiseDB: 50, crowdDensity: 1, infraLoad: 50 };
+  }
 };
 
-export const MOCK_DESTINATIONS: Destination[] = [
+// Define generateGuides before using it in the loop
+const generateGuides = (destName: string, country: string): TourGuide[] => [
   {
-    id: 'lofoten-norway',
-    name: 'Lofoten Islands',
-    country: 'Norway',
-    image: 'https://images.unsplash.com/photo-1513519107127-1bed33748e4c?auto=format&fit=crop&w=1200&q=80',
-    status: 'Recommended',
-    metrics: { 
-      airQualityAQI: 12, // Good
-      waterPPM: 35, // Excellent
-      soilPPM: 10, // Virgin soil
-      noiseDB: 32, // Library quiet
-      crowdDensity: 0.1, // Sparse
-      infraLoad: 15 
-    },
-    localSignals: ["Limited parking at Reinebringen - use local shuttles", "Northern lights peak activity forecasted"],
-    communityFeedback: [{ id: '5', user: 'ArcticExplorer', comment: 'Breathtaking fjords and very clean.', date: '2 weeks ago', rating: 5 }],
-    tags: ['Nature', 'Arctic', 'Sustainable'],
-    description: 'Dramatic mountains, open sea, and sheltered bays in the Arctic Circle.',
-    baseCostPerDay: 190
+    id: `g-${destName}-1`,
+    name: 'Alex Rivera',
+    avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=Alex${destName}`,
+    languages: ['English', 'Local'],
+    expertise: ['History', 'Nature'],
+    rating: 4.9,
+    reviewCount: 128,
+    pricePerDay: 85,
+    isSustainabilityCertified: true,
+    bio: `Local expert in ${destName}. I focus on eco-friendly hidden spots and sustainable travel.`
   },
   {
-    id: 'azores-portugal',
-    name: 'Azores',
-    country: 'Portugal',
-    image: 'https://images.unsplash.com/photo-1542385151-efd9000785a0?auto=format&fit=crop&w=800&q=80',
-    status: 'Recommended',
-    metrics: { 
-      airQualityAQI: 18, 
-      waterPPM: 42, 
-      soilPPM: 25, 
-      noiseDB: 38, 
-      crowdDensity: 0.2, 
-      infraLoad: 22 
-    },
-    localSignals: ["Whale migration season - extra boat regulations in effect"],
-    communityFeedback: [{ id: '4', user: 'GreenSoul', comment: 'Pure paradise.', date: '1 week ago', rating: 5 }],
-    tags: ['Volcanic', 'Sustainable', 'Whales'],
-    description: 'One of the world’s most sustainable tourism destinations.',
-    baseCostPerDay: 85,
-    isRiskDropping: true
-  },
-  {
-    id: 'faroe-islands',
-    name: 'Faroe Islands',
-    country: 'Denmark',
-    image: 'https://images.unsplash.com/photo-1527333656061-ca7adf608ae1?auto=format&fit=crop&w=800&q=80',
-    status: 'Recommended',
-    metrics: { 
-      airQualityAQI: 14, 
-      waterPPM: 28, 
-      soilPPM: 15, 
-      noiseDB: 35, 
-      crowdDensity: 0.15, 
-      infraLoad: 18 
-    },
-    localSignals: ["Road closures for sheep migration expected next week"],
-    communityFeedback: [],
-    tags: ['Rugged', 'Islands', 'Eco'],
-    description: 'Pristine islands focused on preservation over volume.',
-    baseCostPerDay: 120
-  },
-  {
-    id: 'kyoto-japan',
-    name: 'Kyoto',
-    country: 'Japan',
-    image: 'https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?auto=format&fit=crop&w=800&q=80',
-    status: 'Caution Advised',
-    metrics: { 
-      airQualityAQI: 65, // Moderate
-      waterPPM: 150, // Standard
-      soilPPM: 80, 
-      noiseDB: 68, // Urban moderate
-      crowdDensity: 1.5, // Busy
-      infraLoad: 75 
-    },
-    localSignals: ["Cherry blossom peak crowds reported"],
-    communityFeedback: [{ id: '3', user: 'SakuraFan', comment: 'Beautiful but temples are packed.', date: '2 days ago', rating: 4 }],
-    tags: ['Temples', 'Nature', 'Seasonal'],
-    description: 'High seasonal demand puts stress on local spiritual sites.',
-    baseCostPerDay: 110,
-    isRiskDropping: true
-  },
-  {
-    id: 'venice-italy',
-    name: 'Venice',
-    country: 'Italy',
-    image: 'https://images.unsplash.com/photo-1523906834658-6e24ef2386f9?auto=format&fit=crop&w=800&q=80',
-    status: 'Not Recommended',
-    metrics: { 
-      airQualityAQI: 145, // Unhealthy for sensitive groups
-      waterPPM: 850, // Poor
-      soilPPM: 420, 
-      noiseDB: 82, // Loud
-      crowdDensity: 3.8, // Dense
-      infraLoad: 95 
-    },
-    localSignals: ["Heavy congestion alert in St. Mark's Square", "High tide warning (Acqua Alta)"],
-    communityFeedback: [{ id: '1', user: 'EcoTraveler99', comment: 'Way too crowded.', date: 'Today', rating: 2 }],
-    tags: ['Cultural', 'Historic', 'Overcrowded'],
-    description: 'Facing extreme climate risks and overwhelming crowd pressure.',
-    baseCostPerDay: 130
-  },
-  {
-    id: 'santorini-greece',
-    name: 'Santorini',
-    country: 'Greece',
-    image: 'https://images.unsplash.com/photo-1570077188670-e3a8d69ac5ff?auto=format&fit=crop&w=800&q=80',
-    status: 'Not Recommended',
-    metrics: { 
-      airQualityAQI: 120, 
-      waterPPM: 950, 
-      soilPPM: 310, 
-      noiseDB: 94, // Very Loud
-      crowdDensity: 4.2, 
-      infraLoad: 98 
-    },
-    localSignals: ["Water rationing in effect for summer season"],
-    communityFeedback: [],
-    tags: ['Luxury', 'Views', 'Stressed'],
-    description: 'Iconic views but severe water scarcity and tourism fatigue.',
-    baseCostPerDay: 180
+    id: `g-${destName}-2`,
+    name: 'Sarah Chen',
+    avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=Sarah${destName}`,
+    languages: ['English', 'Mandarin'],
+    expertise: ['Food', 'Photography'],
+    rating: 4.7,
+    reviewCount: 94,
+    pricePerDay: 120,
+    isSustainabilityCertified: false,
+    isPremiumOnly: true,
+    bio: `Passionate about the culinary secrets of ${country}. Let's find the best local eats!`
   }
 ];
+
+// Initialize MOCK_GUIDES to be populated later
+export const MOCK_GUIDES: Record<string, TourGuide[]> = {};
+
+export const MOCK_DESTINATIONS: Destination[] = [
+  // --- INDIA (12) ---
+  { id: 'jaipur-in', name: 'Jaipur', country: 'India', image: 'https://images.unsplash.com/photo-1599661046289-e31897851bb1?auto=format&fit=crop&w=800&q=80', status: 'Caution Advised', metrics: getMetrics('urban'), localSignals: ["Heritage site restoration", "Hawa Mahal crowds high"], tags: ['Culture', 'History'], description: 'The Pink City of Rajasthan, famous for royal forts and vibrant bazaars.', baseCostPerDay: 55, communityFeedback: getFeedback('Jaipur') },
+  { id: 'ladakh-in', name: 'Ladakh', country: 'India', image: 'https://images.unsplash.com/photo-1544085311-11a028465b03?auto=format&fit=crop&w=800&q=80', status: 'Recommended', metrics: getMetrics('remote'), localSignals: ["High altitude warnings", "Oxygen refill points open"], tags: ['Mountains', 'Adventure'], description: 'High-altitude desert in the Himalayas, a haven for mountain lovers.', baseCostPerDay: 65, communityFeedback: getFeedback('Ladakh') },
+  { id: 'kerala-in', name: 'Munnar', country: 'India', image: 'https://images.unsplash.com/photo-1593693397690-362cb9666fc2?auto=format&fit=crop&w=800&q=80', status: 'Recommended', metrics: getMetrics('nature'), localSignals: ["Tea garden permits active"], tags: ['Nature', 'Relaxation'], description: 'Rolling hills and sprawling tea plantations in the Western Ghats.', baseCostPerDay: 45, communityFeedback: getFeedback('Munnar') },
+  { id: 'goa-in', name: 'Goa', country: 'India', image: 'https://images.unsplash.com/photo-1512343879784-a960bf40e7f2?auto=format&fit=crop&w=800&q=80', status: 'Caution Advised', metrics: getMetrics('urban'), localSignals: ["Beach cleanup drive", "Monsoon season high tide"], tags: ['Beach', 'Nightlife'], description: 'Famed for its beaches, ranging from popular Baga to quiet Agonda.', baseCostPerDay: 70, communityFeedback: getFeedback('Goa') },
+  { id: 'varanasi-in', name: 'Varanasi', country: 'India', image: 'https://images.unsplash.com/photo-1561361513-2d000a50f0dc?auto=format&fit=crop&w=800&q=80', status: 'Risky', metrics: getMetrics('urban'), localSignals: ["Ghat ceremony congestion", "AQI alerts in old city"], tags: ['Spirituality', 'History'], description: 'One of the oldest continuously inhabited cities in the world.', baseCostPerDay: 40, communityFeedback: getFeedback('Varanasi') },
+  { id: 'hampi-in', name: 'Hampi', country: 'India', image: 'https://images.unsplash.com/photo-1618773928121-c32242e63f39?auto=format&fit=crop&w=800&q=80', status: 'Recommended', metrics: getMetrics('nature'), localSignals: ["Ruins preservation active"], tags: ['Archaeology', 'History'], description: 'The boulder-strewn landscape of the former Vijayanagara Empire.', baseCostPerDay: 50, communityFeedback: getFeedback('Hampi') },
+  { id: 'andaman-in', name: 'Havelock Island', country: 'India', image: 'https://images.unsplash.com/photo-1589308078059-be1415eab4c3?auto=format&fit=crop&w=800&q=80', status: 'Recommended', metrics: getMetrics('remote'), localSignals: ["Coral reef protection zones"], tags: ['Islands', 'Diving'], description: 'Pristine beaches and some of Asia’s best scuba diving spots.', baseCostPerDay: 90, communityFeedback: getFeedback('Havelock Island') },
+  { id: 'darjeeling-in', name: 'Darjeeling', country: 'India', image: 'https://images.unsplash.com/photo-1544735032-6a71fd64446b?auto=format&fit=crop&w=800&q=80', status: 'Recommended', metrics: getMetrics('nature'), localSignals: ["Toy train schedule updated"], tags: ['Mountains', 'Tea'], description: 'Known for its black tea and Kanchenjunga, the world\'s third-highest peak.', baseCostPerDay: 60, communityFeedback: getFeedback('Darjeeling') },
+  { id: 'agra-in', name: 'Agra', country: 'India', image: 'https://images.unsplash.com/photo-1564507592333-c60657eea523?auto=format&fit=crop&w=800&q=80', status: 'Caution Advised', metrics: getMetrics('urban'), localSignals: ["Taj Mahal morning fog warnings"], tags: ['Wonders', 'History'], description: 'Home to the iconic Taj Mahal and other Mughal-era monuments.', baseCostPerDay: 60, communityFeedback: getFeedback('Agra') },
+  { id: 'rishikesh-in', name: 'Rishikesh', country: 'India', image: 'https://images.unsplash.com/photo-1601340156942-7935f111e152?auto=format&fit=crop&w=800&q=80', status: 'Recommended', metrics: getMetrics('nature'), localSignals: ["Ganga river levels moderate"], tags: ['Yoga', 'Adventure'], description: 'The Yoga Capital of the World and a gateway to the Himalayas.', baseCostPerDay: 40, communityFeedback: getFeedback('Rishikesh') },
+  { id: 'udaipur-in', name: 'Udaipur', country: 'India', image: 'https://images.unsplash.com/photo-1590487332204-74971207e0c4?auto=format&fit=crop&w=800&q=80', status: 'Recommended', metrics: getMetrics('urban'), localSignals: ["Lake Pichola boating active"], tags: ['Luxury', 'Romance'], description: 'The City of Lakes, known for its royal palaces and serene water.', baseCostPerDay: 85, communityFeedback: getFeedback('Udaipur') },
+  { id: 'mumbai-in', name: 'Mumbai', country: 'India', image: 'https://images.unsplash.com/photo-1566552881560-0be862a7c445?auto=format&fit=crop&w=800&q=80', status: 'Risky', metrics: getMetrics('urban'), localSignals: ["Local train high volume", "Coastal road construction"], tags: ['Metropolis', 'Cinema'], description: 'The commercial capital of India, a melting pot of chaos and dreams.', baseCostPerDay: 110, communityFeedback: getFeedback('Mumbai') },
+
+  // --- USA (12) ---
+  { id: 'nyc-us', name: 'New York City', country: 'USA', image: 'https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?auto=format&fit=crop&w=800&q=80', status: 'Caution Advised', metrics: getMetrics('urban'), localSignals: ["Subway signal delays", "High noise in Midtown"], tags: ['Urban', 'Culture'], description: 'The Big Apple, a global center for arts, finance, and food.', baseCostPerDay: 280, communityFeedback: getFeedback('New York City') },
+  { id: 'yellowstone-us', name: 'Yellowstone', country: 'USA', image: 'https://images.unsplash.com/photo-1531315630201-bb15abeb1653?auto=format&fit=crop&w=800&q=80', status: 'Recommended', metrics: getMetrics('nature'), localSignals: ["Bison activity warnings", "Old Faithful active"], tags: ['Geothermal', 'Parks'], description: 'The first national park in the world, home to geysers and grizzly bears.', baseCostPerDay: 150, communityFeedback: getFeedback('Yellowstone') },
+  { id: 'sanfran-us', name: 'San Francisco', country: 'USA', image: 'https://images.unsplash.com/photo-1501594907352-04cda38ebc29?auto=format&fit=crop&w=800&q=80', status: 'Recommended', metrics: getMetrics('urban'), localSignals: ["Golden Gate fog alerts"], tags: ['Tech', 'Hills'], description: 'Famed for its Victorian houses, steep streets, and the iconic red bridge.', baseCostPerDay: 220, communityFeedback: getFeedback('San Francisco') },
+  { id: 'miami-us', name: 'Miami', country: 'USA', image: 'https://images.unsplash.com/photo-1535498730771-e735b998cd64?auto=format&fit=crop&w=800&q=80', status: 'Caution Advised', metrics: getMetrics('urban'), localSignals: ["High humidity alerts", "Beach events high volume"], tags: ['Beach', 'Latin'], description: 'Glitz, glamour, and a vibrant cultural scene with strong Latin influences.', baseCostPerDay: 240, communityFeedback: getFeedback('Miami') },
+  { id: 'alaska-us', name: 'Denali', country: 'USA', image: 'https://images.unsplash.com/photo-1518116556111-2da6a604245d?auto=format&fit=crop&w=800&q=80', status: 'Recommended', metrics: getMetrics('remote'), localSignals: ["Trail maintenance in North", "Moose sightings high"], tags: ['Wildlife', 'Glaciers'], description: 'Alaska’s vast interior, centered on North America’s tallest peak.', baseCostPerDay: 190, communityFeedback: getFeedback('Denali') },
+  { id: 'grandcanyon-us', name: 'Grand Canyon', country: 'USA', image: 'https://images.unsplash.com/photo-1474044159687-1ee9f3a51722?auto=format&fit=crop&w=800&q=80', status: 'Recommended', metrics: getMetrics('nature'), localSignals: ["Heat advisory in inner canyon"], tags: ['Canyon', 'Nature'], description: 'A powerful and inspiring landscape, carved over billions of years.', baseCostPerDay: 140, communityFeedback: getFeedback('Grand Canyon') },
+  { id: 'seattle-us', name: 'Seattle', country: 'USA', image: 'https://images.unsplash.com/photo-1502175353174-a7a70e73b362?auto=format&fit=crop&w=800&q=80', status: 'Recommended', metrics: getMetrics('urban'), localSignals: ["Light rain forecasted", "Market congestion moderate"], tags: ['Coffee', 'Tech'], description: 'The Emerald City, surrounded by water, mountains and evergreen forests.', baseCostPerDay: 200, communityFeedback: getFeedback('Seattle') },
+  { id: 'hawaii-us', name: 'Maui', country: 'USA', image: 'https://images.unsplash.com/photo-1505852673533-9199839f377c?auto=format&fit=crop&w=800&q=80', status: 'Recommended', metrics: getMetrics('nature'), localSignals: ["Sustainable reef sunscreen required"], tags: ['Tropical', 'Surf'], description: 'The Valley Isle, known for its beaches and Haleakalā volcano.', baseCostPerDay: 320, communityFeedback: getFeedback('Maui') },
+  { id: 'vegas-us', name: 'Las Vegas', country: 'USA', image: 'https://images.unsplash.com/photo-1605833559746-bb0843706f4a?auto=format&fit=crop&w=800&q=80', status: 'Caution Advised', metrics: getMetrics('urban'), localSignals: ["Extreme heat index", "Water conservation notices"], tags: ['Entertainment', 'Desert'], description: 'The Entertainment Capital of the World, thriving in the Mojave Desert.', baseCostPerDay: 260, communityFeedback: getFeedback('Las Vegas') },
+  { id: 'chicago-us', name: 'Chicago', country: 'USA', image: 'https://images.unsplash.com/photo-1494522855154-9297ac14b55f?auto=format&fit=crop&w=800&q=80', status: 'Caution Advised', metrics: getMetrics('urban'), localSignals: ["Wind chill warnings", "L-train disruptions"], tags: ['Architecture', 'Food'], description: 'The Windy City, famous for bold architecture and deep-dish pizza.', baseCostPerDay: 210, communityFeedback: getFeedback('Chicago') },
+  { id: 'neworleans-us', name: 'New Orleans', country: 'USA', image: 'https://images.unsplash.com/photo-1522204523234-8729aa6e3d5f?auto=format&fit=crop&w=800&q=80', status: 'Caution Advised', metrics: getMetrics('urban'), localSignals: ["Bourbon Street density high"], tags: ['Music', 'Jazz'], description: 'The Big Easy, a unique fusion of French, African, and American cultures.', baseCostPerDay: 180, communityFeedback: getFeedback('New Orleans') },
+  { id: 'austin-us', name: 'Austin', country: 'USA', image: 'https://images.unsplash.com/photo-1531210483974-4f8c1f33fd35?auto=format&fit=crop&w=800&q=80', status: 'Recommended', metrics: getMetrics('urban'), localSignals: ["Congress Bridge bats activity"], tags: ['Music', 'Outdoors'], description: 'Live Music Capital of the World, known for its quirky and friendly vibe.', baseCostPerDay: 190, communityFeedback: getFeedback('Austin') },
+
+  // --- CHINA (10) ---
+  { id: 'beijing-cn', name: 'Beijing', country: 'China', image: 'https://images.unsplash.com/photo-1508804185872-d7badad00f7d?auto=format&fit=crop&w=800&q=80', status: 'Caution Advised', metrics: getMetrics('industrial'), localSignals: ["Sandstorm warning", "Forbidden City capacity reached"], tags: ['Empire', 'History'], description: 'The heart of Chinese history and politics for over 800 years.', baseCostPerDay: 120, communityFeedback: getFeedback('Beijing') },
+  { id: 'shanghai-cn', name: 'Shanghai', country: 'China', image: 'https://images.unsplash.com/photo-1538428472674-8403102463b9?auto=format&fit=crop&w=800&q=80', status: 'Risky', metrics: getMetrics('industrial'), localSignals: ["The Bund evening congestion", "Industrial AQI peak"], tags: ['Futuristic', 'Skyline'], description: 'China’s biggest city and a global financial hub.', baseCostPerDay: 150, communityFeedback: getFeedback('Shanghai') },
+  { id: 'zhangjiajie-cn', name: 'Zhangjiajie', country: 'China', image: 'https://images.unsplash.com/photo-1599839619722-397514112634?auto=format&fit=crop&w=800&q=80', status: 'Recommended', metrics: getMetrics('nature'), localSignals: ["Glass bridge quota alert", "High humidity"], tags: ['Mountains', 'Avatar'], description: 'Stunning sandstone pillars that inspired the floating mountains in Avatar.', baseCostPerDay: 95, communityFeedback: getFeedback('Zhangjiajie') },
+  { id: 'chengdu-cn', name: 'Chengdu', country: 'China', image: 'https://images.unsplash.com/photo-1525350414197-af990886c567?auto=format&fit=crop&w=800&q=80', status: 'Recommended', metrics: getMetrics('urban'), localSignals: ["Panda base visiting hours", "Hot pot market high traffic"], tags: ['Pandas', 'Food'], description: 'The gateway to Sichuan province, known for spicy food and giant pandas.', baseCostPerDay: 80, communityFeedback: getFeedback('Chengdu') },
+  { id: 'guilin-cn', name: 'Guilin', country: 'China', image: 'https://images.unsplash.com/photo-1523731407965-2430cd12f5e4?auto=format&fit=crop&w=800&q=80', status: 'Recommended', metrics: getMetrics('nature'), localSignals: ["Li River cruise water levels"], tags: ['Landscape', 'Nature'], description: 'Renowned for its dramatic limestone karst topography.', baseCostPerDay: 75, communityFeedback: getFeedback('Guilin') },
+  { id: 'xian-cn', name: 'Xi\'an', country: 'China', image: 'https://images.unsplash.com/photo-1582234053917-768a419f86f7?auto=format&fit=crop&w=800&q=80', status: 'Caution Advised', metrics: getMetrics('urban'), localSignals: ["Terracotta Army maintenance"], tags: ['History', 'Warriors'], description: 'Ancient capital of 13 dynasties and home to the Terracotta Army.', baseCostPerDay: 70, communityFeedback: getFeedback('Xi\'an') },
+  { id: 'hangzhou-cn', name: 'Hangzhou', country: 'China', image: 'https://images.unsplash.com/photo-1543329046-64696c21a485?auto=format&fit=crop&w=800&q=80', status: 'Recommended', metrics: getMetrics('nature'), localSignals: ["West Lake lotus bloom peak"], tags: ['Lakes', 'Tea'], description: 'Famous for its historic West Lake and Longjing tea fields.', baseCostPerDay: 90, communityFeedback: getFeedback('Hangzhou') },
+  { id: 'hongkong-cn', name: 'Hong Kong', country: 'China', image: 'https://images.unsplash.com/photo-1516893842880-5d8aada7ac05?auto=format&fit=crop&w=800&q=80', status: 'Caution Advised', metrics: getMetrics('urban'), localSignals: ["Star Ferry delays", "Peak Tram high volume"], tags: ['Island', 'Skyline'], description: 'A vibrant harbor city where East meets West.', baseCostPerDay: 180, communityFeedback: getFeedback('Hong Kong') },
+  { id: 'lijiang-cn', name: 'Lijiang', country: 'China', image: 'https://images.unsplash.com/photo-1596700810488-8422830846f4?auto=format&fit=crop&w=800&q=80', status: 'Recommended', metrics: getMetrics('nature'), localSignals: ["Old town foot traffic high"], tags: ['History', 'Culture'], description: 'A UNESCO World Heritage old town with a unique canal system.', baseCostPerDay: 85, communityFeedback: getFeedback('Lijiang') },
+  { id: 'suzhou-cn', name: 'Suzhou', country: 'China', image: 'https://images.unsplash.com/photo-1527685216219-c7012c0d109d?auto=format&fit=crop&w=800&q=80', status: 'Recommended', metrics: getMetrics('urban'), localSignals: ["Classical gardens restoration"], tags: ['Gardens', 'Canals'], description: 'The "Venice of the East," famous for its traditional Chinese gardens.', baseCostPerDay: 95, communityFeedback: getFeedback('Suzhou') },
+
+  // --- JAPAN (10) ---
+  { id: 'kyoto-jp', name: 'Kyoto', country: 'Japan', image: 'https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?auto=format&fit=crop&w=800&q=80', status: 'Recommended', metrics: getMetrics('urban'), localSignals: ["Temples evening light up", "Gion area privacy rules"], tags: ['Tradition', 'Temples'], description: 'The cultural soul of Japan, home to thousands of Buddhist temples.', baseCostPerDay: 140, communityFeedback: getFeedback('Kyoto') },
+  { id: 'tokyo-jp', name: 'Tokyo', country: 'Japan', image: 'https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?auto=format&fit=crop&w=800&q=80', status: 'Caution Advised', metrics: getMetrics('urban'), localSignals: ["Shibuya crossing extreme density", "Earthquake drill simulation"], tags: ['Modern', 'Food'], description: 'A neon-lit metropolis where ancient tradition meets futuristic tech.', baseCostPerDay: 180, communityFeedback: getFeedback('Tokyo') },
+  { id: 'hokkaido-jp', name: 'Sapporo', country: 'Japan', image: 'https://images.unsplash.com/photo-1557053503-0c252e5c8093?auto=format&fit=crop&w=800&q=80', status: 'Recommended', metrics: getMetrics('nature'), localSignals: ["Snow festival preparations", "Ski resort snow levels high"], tags: ['Snow', 'Seafood'], description: 'Famous for its annual Snow Festival and high-quality seafood.', baseCostPerDay: 130, communityFeedback: getFeedback('Sapporo') },
+  { id: 'osaka-jp', name: 'Osaka', country: 'Japan', image: 'https://images.unsplash.com/photo-1590559899731-a382839e5549?auto=format&fit=crop&w=800&q=80', status: 'Recommended', metrics: getMetrics('urban'), localSignals: ["Street food market high volume"], tags: ['Food', 'City'], description: 'Japan’s street food capital, known for takoyaki and its bright Dotonbori district.', baseCostPerDay: 120, communityFeedback: getFeedback('Osaka') },
+  { id: 'nara-jp', name: 'Nara', country: 'Japan', image: 'https://images.unsplash.com/photo-1518173946687-a4c8a3b7468e?auto=format&fit=crop&w=800&q=80', status: 'Recommended', metrics: getMetrics('nature'), localSignals: ["Deer feeding advisory", "Todaiji temple crowds moderate"], tags: ['Nature', 'Ancient'], description: 'Famed for its giant Buddha and the hundreds of free-roaming deer in its park.', baseCostPerDay: 100, communityFeedback: getFeedback('Nara') },
+  { id: 'mtfuji-jp', name: 'Mount Fuji', country: 'Japan', image: 'https://images.unsplash.com/photo-1509023464722-18d996393ca8?auto=format&fit=crop&w=800&q=80', status: 'Recommended', metrics: getMetrics('remote'), localSignals: ["Hiking season slots limited", "Visibility clear"], tags: ['Icon', 'Mountains'], description: 'Japan’s highest mountain and most iconic symbol.', baseCostPerDay: 110, communityFeedback: getFeedback('Mount Fuji') },
+  { id: 'okinawa-jp', name: 'Okinawa', country: 'Japan', image: 'https://images.unsplash.com/photo-1570168007204-dfb528c6958f?auto=format&fit=crop&w=800&q=80', status: 'Recommended', metrics: getMetrics('nature'), localSignals: ["Diving visibility excellent", "Reef protection active"], tags: ['Island', 'Beach'], description: 'Subtropical islands with crystal-clear waters and a unique Ryukyu culture.', baseCostPerDay: 150, communityFeedback: getFeedback('Okinawa') },
+  { id: 'hiroshima-jp', name: 'Hiroshima', country: 'Japan', image: 'https://images.unsplash.com/photo-1549488344-1f9b8d2bd1f3?auto=format&fit=crop&w=800&q=80', status: 'Recommended', metrics: getMetrics('urban'), localSignals: ["Peace park memorial events"], tags: ['History', 'Food'], description: 'A city rebuilt as a message of peace and resilience.', baseCostPerDay: 110, communityFeedback: getFeedback('Hiroshima') },
+  { id: 'fukuoka-jp', name: 'Fukuoka', country: 'Japan', image: 'https://images.unsplash.com/photo-1558231016-57774ccf25a5?auto=format&fit=crop&w=800&q=80', status: 'Recommended', metrics: getMetrics('urban'), localSignals: ["Yatai stalls high evening traffic"], tags: ['Ramen', 'Coastal'], description: 'Modern coastal city famous for its unique open-air food stalls (yatai).', baseCostPerDay: 100, communityFeedback: getFeedback('Fukuoka') },
+  { id: 'hakone-jp', name: 'Hakone', country: 'Japan', image: 'https://images.unsplash.com/photo-1490806843957-31f4c9a91c65?auto=format&fit=crop&w=800&q=80', status: 'Recommended', metrics: getMetrics('nature'), localSignals: ["Onsen sulfur levels normal", "Fuji views clear"], tags: ['Spa', 'Nature'], description: 'A hot-spring town offering great views of Mount Fuji.', baseCostPerDay: 160, communityFeedback: getFeedback('Hakone') },
+
+  // --- UK & EUROPE (15) ---
+  { id: 'london-uk', name: 'London', country: 'UK', image: 'https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?auto=format&fit=crop&w=800&q=80', status: 'Caution Advised', metrics: getMetrics('urban'), localSignals: ["Tube strikes impact South", "Thames water levels normal"], tags: ['City', 'Heritage'], description: 'Capital of the UK, blending 2,000 years of history with a modern global culture.', baseCostPerDay: 240, communityFeedback: getFeedback('London') },
+  { id: 'edinburgh-uk', name: 'Edinburgh', country: 'UK', image: 'https://images.unsplash.com/photo-1506377585622-bedcbb027afc?auto=format&fit=crop&w=800&q=80', status: 'Recommended', metrics: getMetrics('urban'), localSignals: ["Fringe festival crowds extreme", "Castle wind speeds high"], tags: ['Gothic', 'Art'], description: 'Scotland’s hilly capital, known for its medieval Old Town and neoclassical New Town.', baseCostPerDay: 180, communityFeedback: getFeedback('Edinburgh') },
+  { id: 'paris-fr', name: 'Paris', country: 'France', image: 'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?auto=format&fit=crop&w=800&q=80', status: 'Caution Advised', metrics: getMetrics('urban'), localSignals: ["Olympic zone restrictions active", "Seine river pollution watch"], tags: ['Art', 'History'], description: 'The City of Light, a global center for art, fashion, and gastronomy.', baseCostPerDay: 210, communityFeedback: getFeedback('Paris') },
+  { id: 'berlin-de', name: 'Berlin', country: 'Germany', image: 'https://images.unsplash.com/photo-1560969184-10fe8719e047?auto=format&fit=crop&w=800&q=80', status: 'Recommended', metrics: getMetrics('urban'), localSignals: ["S-Bahn track works", "Techno club noise alerts"], tags: ['History', 'Clubbing'], description: 'Germany’s capital, known for its art scene, modern architecture, and turbulent history.', baseCostPerDay: 160, communityFeedback: getFeedback('Berlin') },
+  { id: 'rome-it', name: 'Rome', country: 'Italy', image: 'https://images.unsplash.com/photo-1552832230-c0197dd311b5?auto=format&fit=crop&w=800&q=80', status: 'Caution Advised', metrics: getMetrics('urban'), localSignals: ["Vatican morning crowds peak", "Cobblestone heat island warning"], tags: ['Empire', 'Ancient'], description: 'The Eternal City, where modern life thrives amidst nearly 3,000 years of art.', baseCostPerDay: 170, communityFeedback: getFeedback('Rome') },
+  { id: 'venice-it', name: 'Venice', country: 'Italy', image: 'https://images.unsplash.com/photo-1523906834658-6e24ef2386f9?auto=format&fit=crop&w=800&q=80', status: 'Not Recommended', metrics: getMetrics('industrial'), localSignals: ["High tide flooding", "Day-trip tax active"], tags: ['Canals', 'Overcrowded'], description: 'Built on over 100 small islands, struggling with overtourism and climate change.', baseCostPerDay: 200, communityFeedback: getFeedback('Venice') },
+  { id: 'barcelona-es', name: 'Barcelona', country: 'Spain', image: 'https://images.unsplash.com/photo-1583422409516-2895a77efded?auto=format&fit=crop&w=800&q=80', status: 'Caution Advised', metrics: getMetrics('urban'), localSignals: ["Sagrada Familia queues high", "Water drought restrictions"], tags: ['Art', 'Beach'], description: 'The cosmopolitan capital of Catalonia, famed for Gaudí’s architecture.', baseCostPerDay: 180, communityFeedback: getFeedback('Barcelona') },
+  { id: 'madrid-es', name: 'Madrid', country: 'Spain', image: 'https://images.unsplash.com/photo-1539037116277-4db20889f2d4?auto=format&fit=crop&w=800&q=80', status: 'Recommended', metrics: getMetrics('urban'), localSignals: ["Retiro park noise levels low", "Plaza Mayor traffic high"], tags: ['Culture', 'Art'], description: 'Spain’s central capital, a city of elegant boulevards and expansive parks.', baseCostPerDay: 160, communityFeedback: getFeedback('Madrid') },
+  { id: 'munich-de', name: 'Munich', country: 'Germany', image: 'https://images.unsplash.com/photo-1467269204594-9661b134dd2b?auto=format&fit=crop&w=800&q=80', status: 'Recommended', metrics: getMetrics('urban'), localSignals: ["Oktoberfest crowds peak", "Public transport high volume"], tags: ['Beer', 'Tradition'], description: 'Bavaria’s capital, home to centuries-old buildings and numerous museums.', baseCostPerDay: 190, communityFeedback: getFeedback('Munich') },
+  { id: 'amsterdam-nl', name: 'Amsterdam', country: 'Netherlands', image: 'https://images.unsplash.com/photo-1534351590666-13e3e96b5017?auto=format&fit=crop&w=800&q=80', status: 'Caution Advised', metrics: getMetrics('urban'), localSignals: ["Canal traffic alerts", "Noise restrictions in center"], tags: ['Canals', 'Cycling'], description: 'Known for its artistic heritage, elaborate canal system, and narrow houses.', baseCostPerDay: 220, communityFeedback: getFeedback('Amsterdam') },
+  { id: 'santorini-gr', name: 'Santorini', country: 'Greece', image: 'https://images.unsplash.com/photo-1570077188670-e3a8d69ac5ff?auto=format&fit=crop&w=800&q=80', status: 'Caution Advised', metrics: getMetrics('urban'), localSignals: ["Cruise ship surge warning", "Heat advisory on caldera"], tags: ['Island', 'Romance'], description: 'Iconic white-washed buildings overlooking the turquoise Aegean Sea.', baseCostPerDay: 280, communityFeedback: getFeedback('Santorini') },
+  { id: 'prague-cz', name: 'Prague', country: 'Czech Republic', image: 'https://images.unsplash.com/photo-1519677100203-ad493239c1c4?auto=format&fit=crop&w=800&q=80', status: 'Recommended', metrics: getMetrics('urban'), localSignals: ["Charles Bridge morning fog", "Old Town density moderate"], tags: ['Gothic', 'History'], description: 'The City of a Hundred Spires, famous for its Old Town Square and baroque buildings.', baseCostPerDay: 110, communityFeedback: getFeedback('Prague') },
+  { id: 'vienna-at', name: 'Vienna', country: 'Austria', image: 'https://images.unsplash.com/photo-1516550893923-42d28e5677af?auto=format&fit=crop&w=800&q=80', status: 'Recommended', metrics: getMetrics('urban'), localSignals: ["Opera house events congestion"], tags: ['Classical', 'Imperial'], description: 'Austria’s capital, known for its imperial palaces and musical legacy.', baseCostPerDay: 170, communityFeedback: getFeedback('Vienna') },
+  { id: 'zermatt-ch', name: 'Zermatt', country: 'Switzerland', image: 'https://images.unsplash.com/photo-1527668752968-14dc70a27c95?auto=format&fit=crop&w=800&q=80', status: 'Recommended', metrics: getMetrics('nature'), localSignals: ["Matterhorn visibility excellent", "Snow conditions high"], tags: ['Ski', 'Mountains'], description: 'A mountain resort renowned for skiing, climbing and the iconic Matterhorn.', baseCostPerDay: 350, communityFeedback: getFeedback('Zermatt') },
+  { id: 'lofoten-no', name: 'Lofoten', country: 'Norway', image: 'https://images.unsplash.com/photo-1513519107127-1bed33748e4c?auto=format&fit=crop&w=800&q=80', status: 'Recommended', metrics: getMetrics('remote'), localSignals: ["Northern lights probability high"], tags: ['Arctic', 'Nature'], description: 'A dramatic archipelago known for its rugged scenery and fishing villages.', baseCostPerDay: 210, communityFeedback: getFeedback('Lofoten') },
+
+  // --- OCEANIA & UAE (10) ---
+  { id: 'sydney-au', name: 'Sydney', country: 'Australia', image: 'https://images.unsplash.com/photo-1506973035872-a4ec16b8e8d9?auto=format&fit=crop&w=800&q=80', status: 'Recommended', metrics: getMetrics('urban'), localSignals: ["Shark activity monitoring", "Harbor ferry maintenance"], tags: ['Harbor', 'Coastal'], description: 'Australia’s largest city, best known for its harborfront Sydney Opera House.', baseCostPerDay: 220, communityFeedback: getFeedback('Sydney') },
+  { id: 'melbourne-au', name: 'Melbourne', country: 'Australia', image: 'https://images.unsplash.com/photo-1470290371409-70cb468ec4bb?auto=format&fit=crop&w=800&q=80', status: 'Recommended', metrics: getMetrics('urban'), localSignals: ["Coffee culture festivals", "Laneway congestion low"], tags: ['Art', 'Coffee'], description: 'Known for its diverse cultural scene, world-class restaurants, and laneways.', baseCostPerDay: 190, communityFeedback: getFeedback('Melbourne') },
+  { id: 'greatbarrier-au', name: 'Great Barrier Reef', country: 'Australia', image: 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?auto=format&fit=crop&w=800&q=80', status: 'Recommended', metrics: getMetrics('nature'), localSignals: ["Coral bleaching watch active", "Diving conditions clear"], tags: ['Ocean', 'Marine'], description: 'The world’s largest coral reef system, a masterpiece of natural beauty.', baseCostPerDay: 250, communityFeedback: getFeedback('Great Barrier Reef') },
+  { id: 'dubai-ae', name: 'Dubai', country: 'UAE', image: 'https://images.unsplash.com/photo-1512453979798-5ea266f8880c?auto=format&fit=crop&w=800&q=80', status: 'Risky', metrics: getMetrics('urban'), localSignals: ["Sandstorm alert", "Extreme UV index warning"], tags: ['Luxury', 'Modern'], description: 'A city of superlatives, with the tallest building and the largest mall.', baseCostPerDay: 300, communityFeedback: getFeedback('Dubai') },
+  { id: 'abudhabi-ae', name: 'Abu Dhabi', country: 'UAE', image: 'https://images.unsplash.com/photo-1518684079-3c830dcef090?auto=format&fit=crop&w=800&q=80', status: 'Caution Advised', metrics: getMetrics('urban'), localSignals: ["Louvre morning slots limited"], tags: ['Culture', 'Desert'], description: 'The capital of the UAE, offering a blend of modern design and ancient history.', baseCostPerDay: 250, communityFeedback: getFeedback('Abu Dhabi') },
+  { id: 'queenstown-nz', name: 'Queenstown', country: 'New Zealand', image: 'https://images.unsplash.com/photo-1589802829985-817e51181b92?auto=format&fit=crop&w=800&q=80', status: 'Recommended', metrics: getMetrics('nature'), localSignals: ["Adventure sports noise levels high"], tags: ['Adventure', 'Lakes'], description: 'The Adventure Capital of the World, set against the Southern Alps.', baseCostPerDay: 220, communityFeedback: getFeedback('Queenstown') },
+  { id: 'goldcoast-au', name: 'Gold Coast', country: 'Australia', image: 'https://images.unsplash.com/photo-1506450983270-d72942d0754e?auto=format&fit=crop&w=800&q=80', status: 'Recommended', metrics: getMetrics('urban'), localSignals: ["Beach erosion warnings"], tags: ['Surf', 'ThemeParks'], description: 'Famed for its long sandy beaches, surfing spots and elaborate theme parks.', baseCostPerDay: 170, communityFeedback: getFeedback('Gold Coast') },
+  { id: 'perth-au', name: 'Perth', country: 'Australia', image: 'https://images.unsplash.com/photo-1511216335778-7cb8f49fa7a3?auto=format&fit=crop&w=800&q=80', status: 'Recommended', metrics: getMetrics('urban'), localSignals: ["Kings Park wildflower bloom"], tags: ['Sun', 'Beaches'], description: 'A sun-drenched city on Australia’s west coast, isolated but inviting.', baseCostPerDay: 160, communityFeedback: getFeedback('Perth') },
+  { id: 'milfordsound-nz', name: 'Milford Sound', country: 'New Zealand', image: 'https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=800&q=80', status: 'Recommended', metrics: getMetrics('remote'), localSignals: ["Rainfall high - waterfalls active"], tags: ['Fjords', 'Wildlife'], description: 'Rudyard Kipling called it the eighth wonder of the world.', baseCostPerDay: 280, communityFeedback: getFeedback('Milford Sound') },
+  { id: 'fiji-fj', name: 'Fiji Islands', country: 'Fiji', image: 'https://images.unsplash.com/photo-1540202404-a2f290338848?auto=format&fit=crop&w=800&q=80', status: 'Recommended', metrics: getMetrics('nature'), localSignals: ["Island transport high demand"], tags: ['Tropical', 'Chill'], description: 'A destination for soft coral diving, white-sand beaches and pristine nature.', baseCostPerDay: 240, communityFeedback: getFeedback('Fiji Islands') },
+
+  // --- AFRICA & SOUTH AMERICA (10) ---
+  { id: 'capetown-za', name: 'Cape Town', country: 'South Africa', image: 'https://images.unsplash.com/photo-1580619305218-8423a7ef79b4?auto=format&fit=crop&w=800&q=80', status: 'Recommended', metrics: getMetrics('urban'), localSignals: ["Cable car wind warnings", "Water scarcity alerts"], tags: ['Mountains', 'Ocean'], description: 'Dominated by a flat-topped mountain, offering a mix of cultures and vistas.', baseCostPerDay: 120, communityFeedback: getFeedback('Cape Town') },
+  { id: 'riodejaneiro-br', name: 'Rio de Janeiro', country: 'Brazil', image: 'https://images.unsplash.com/photo-1483729558449-99ef09a8c325?auto=format&fit=crop&w=800&q=80', status: 'Caution Advised', metrics: getMetrics('urban'), localSignals: ["Carnival crowds extreme", "Heat index peak"], tags: ['Carnival', 'Beach'], description: 'Famed for its Copacabana and Ipanema beaches, and the Christ the Redeemer statue.', baseCostPerDay: 130, communityFeedback: getFeedback('Rio de Janeiro') },
+  { id: 'cairo-eg', name: 'Cairo', country: 'Egypt', image: 'https://images.unsplash.com/photo-1503177119275-0aa32b3a9368?auto=format&fit=crop&w=800&q=80', status: 'Risky', metrics: getMetrics('industrial'), localSignals: ["Giza pyramid heat warnings", "Traffic congestion high"], tags: ['History', 'Ancient'], description: 'The largest city in Africa, situated on the banks of the Nile.', baseCostPerDay: 60, communityFeedback: getFeedback('Cairo') },
+  { id: 'machupicchu-pe', name: 'Machu Picchu', country: 'Peru', image: 'https://images.unsplash.com/photo-1526392060635-9d6019884377?auto=format&fit=crop&w=800&q=80', status: 'Recommended', metrics: getMetrics('remote'), localSignals: ["Trail permit availability low", "Morning fog alerts"], tags: ['Ancient', 'Inca'], description: 'A 15th-century Inca citadel located in the Eastern Cordillera of southern Peru.', baseCostPerDay: 180, communityFeedback: getFeedback('Machu Picchu') },
+  { id: 'buenosaires-ar', name: 'Buenos Aires', country: 'Argentina', image: 'https://images.unsplash.com/photo-1589909202802-8f4aadce1849?auto=format&fit=crop&w=800&q=80', status: 'Recommended', metrics: getMetrics('urban'), localSignals: ["Tango festival crowds"], tags: ['Dance', 'Culture'], description: 'The "Paris of South America," known for its European-style architecture.', baseCostPerDay: 90, communityFeedback: getFeedback('Buenos Aires') },
+  { id: 'krugernp-za', name: 'Kruger Park', country: 'South Africa', image: 'https://images.unsplash.com/photo-1516426122078-c23e76319801?auto=format&fit=crop&w=800&q=80', status: 'Recommended', metrics: getMetrics('remote'), localSignals: ["Wildlife sightings reporting active"], tags: ['Safari', 'Wildlife'], description: 'One of the largest game reserves in Africa, home to the Big Five.', baseCostPerDay: 200, communityFeedback: getFeedback('Kruger Park') },
+  { id: 'marrakech-ma', name: 'Marrakech', country: 'Morocco', image: 'https://images.unsplash.com/photo-1597212618440-806262de4fe6?auto=format&fit=crop&w=800&q=80', status: 'Caution Advised', metrics: getMetrics('urban'), localSignals: ["Souk traffic alerts", "Sand wind warning"], tags: ['Souks', 'History'], description: 'The Red City, filled with bustling markets and historic palaces.', baseCostPerDay: 75, communityFeedback: getFeedback('Marrakech') },
+  { id: 'galapagos-ec', name: 'Galápagos', country: 'Ecuador', image: 'https://images.unsplash.com/photo-1554928230-01053457a126?auto=format&fit=crop&w=800&q=80', status: 'Recommended', metrics: getMetrics('remote'), localSignals: ["Wildlife proximity rules strictly enforced"], tags: ['Darwin', 'Islands'], description: 'A unique volcanic archipelago famous for its endemic species.', baseCostPerDay: 260, communityFeedback: getFeedback('Galápagos') },
+  { id: 'saopaulo-br', name: 'São Paulo', country: 'Brazil', image: 'https://images.unsplash.com/photo-1543059152-42b350c0e75a?auto=format&fit=crop&w=800&q=80', status: 'Risky', metrics: getMetrics('industrial'), localSignals: ["Traffic gridlock warnings", "Industrial AQI peak"], tags: ['Culture', 'Gastronomy'], description: 'A massive city with a rich cultural life and a world-class food scene.', baseCostPerDay: 140, communityFeedback: getFeedback('São Paulo') },
+  { id: 'serengeti-tz', name: 'Serengeti', country: 'Tanzania', image: 'https://images.unsplash.com/photo-1516426122078-c23e76319801?auto=format&fit=crop&w=800&q=80', status: 'Recommended', metrics: getMetrics('remote'), localSignals: ["Migration herd locations"], tags: ['Safari', 'Nature'], description: 'Famous for the Great Migration of over two million wildebeest.', baseCostPerDay: 350, communityFeedback: getFeedback('Serengeti') },
+
+  // --- THAILAND & SE ASIA (12) ---
+  { id: 'bangkok-th', name: 'Bangkok', country: 'Thailand', image: 'https://images.unsplash.com/photo-1508006757370-262ba294b7a6?auto=format&fit=crop&w=800&q=80', status: 'Caution Advised', metrics: getMetrics('urban'), localSignals: ["River boat delays", "Market high volume"], tags: ['StreetFood', 'Temples'], description: 'Known for ornate shrines and vibrant street life.', baseCostPerDay: 65, communityFeedback: getFeedback('Bangkok') },
+  { id: 'chiangmai-th', name: 'Chiang Mai', country: 'Thailand', image: 'https://images.unsplash.com/photo-1583020614051-57be50d18084?auto=format&fit=crop&w=800&q=80', status: 'Recommended', metrics: getMetrics('urban'), localSignals: ["Temple night market open"], tags: ['Tradition', 'Mountains'], description: 'A city in mountainous northern Thailand, with hundreds of Buddhist temples.', baseCostPerDay: 50, communityFeedback: getFeedback('Chiang Mai') },
+  { id: 'phuket-th', name: 'Phuket', country: 'Thailand', image: 'https://images.unsplash.com/photo-1589394815804-964ed96aeb33?auto=format&fit=crop&w=800&q=80', status: 'Caution Advised', metrics: getMetrics('urban'), localSignals: ["Water sports noise peak"], tags: ['Island', 'Leisure'], description: 'Thailand’s largest island, famous for its beaches and seaside resorts.', baseCostPerDay: 95, communityFeedback: getFeedback('Phuket') },
+  { id: 'bali-id', name: 'Bali', country: 'Indonesia', image: 'https://images.unsplash.com/photo-1537996194471-e657df975ab4?auto=format&fit=crop&w=800&q=80', status: 'Caution Advised', metrics: getMetrics('urban'), localSignals: ["Traffic jams in Ubud", "Sustainable reef sunblock only"], tags: ['Yoga', 'Beaches'], description: 'Indonesia’s most famous island, known for its forested volcanic mountains and coral reefs.', baseCostPerDay: 85, communityFeedback: getFeedback('Bali') },
+  { id: 'singapore-sg', name: 'Singapore', country: 'Singapore', image: 'https://images.unsplash.com/photo-1525596662741-e94ff9f26de1?auto=format&fit=crop&w=800&q=80', status: 'Recommended', metrics: getMetrics('urban'), localSignals: ["Garden by the bay light show congestion"], tags: ['Clean', 'GardenCity'], description: 'A sunny, tropical island-city-state, famous for its cleanliness and high-tech gardens.', baseCostPerDay: 220, communityFeedback: getFeedback('Singapore') },
+  { id: 'hanoi-vn', name: 'Hanoi', country: 'Vietnam', image: 'https://images.unsplash.com/photo-1509030450996-939974e167c8?auto=format&fit=crop&w=800&q=80', status: 'Caution Advised', metrics: getMetrics('urban'), localSignals: ["Old quarter motorbike traffic extreme"], tags: ['History', 'StreetFood'], description: 'Known for its centuries-old architecture and a rich culture with Southeast Asian influences.', baseCostPerDay: 45, communityFeedback: getFeedback('Hanoi') },
+  { id: 'boracay-ph', name: 'Boracay', country: 'Philippines', image: 'https://images.unsplash.com/photo-1552733407-5d5c46c3bb3b?auto=format&fit=crop&w=800&q=80', status: 'Recommended', metrics: getMetrics('nature'), localSignals: ["Beach visitor quota strictly enforced"], tags: ['Beach', 'Paradise'], description: 'A tiny island in the central Philippines known for its resorts and beaches.', baseCostPerDay: 110, communityFeedback: getFeedback('Boracay') },
+  { id: 'angkorwat-kh', name: 'Angkor Wat', country: 'Cambodia', image: 'https://images.unsplash.com/photo-1600120848574-375225dbd3c5?auto=format&fit=crop&w=800&q=80', status: 'Recommended', metrics: getMetrics('nature'), localSignals: ["Sunrise temple congestion"], tags: ['Archaeology', 'History'], description: 'The largest religious monument in the world by land area.', baseCostPerDay: 55, communityFeedback: getFeedback('Angkor Wat') },
+  { id: 'kualalumpur-my', name: 'Kuala Lumpur', country: 'Malaysia', image: 'https://images.unsplash.com/photo-1541769493541-399c261fbd5b?auto=format&fit=crop&w=800&q=80', status: 'Recommended', metrics: getMetrics('urban'), localSignals: ["Batu Caves morning crowds"], tags: ['Modern', 'Mix'], description: 'Known for its 451m-tall Petronas Twin Towers and its colonial architecture.', baseCostPerDay: 75, communityFeedback: getFeedback('Kuala Lumpur') },
+  { id: 'halongbay-vn', name: 'Halong Bay', country: 'Vietnam', image: 'https://images.unsplash.com/photo-1552074230-74311005230c?auto=format&fit=crop&w=800&q=80', status: 'Recommended', metrics: getMetrics('nature'), localSignals: ["Cave visit slots filling fast"], tags: ['Karst', 'Cruise'], description: 'Featuring thousands of limestone karsts and isles in various shapes and sizes.', baseCostPerDay: 120, communityFeedback: getFeedback('Halong Bay') },
+  { id: 'luangprabang-la', name: 'Luang Prabang', country: 'Laos', image: 'https://images.unsplash.com/photo-1540611025311-01df3cef54b5?auto=format&fit=crop&w=800&q=80', status: 'Recommended', metrics: getMetrics('nature'), localSignals: ["Alms giving ceremony advisory"], tags: ['River', 'Heritage'], description: 'A former royal capital, famous for its many Buddhist temples.', baseCostPerDay: 40, communityFeedback: getFeedback('Luang Prabang') },
+  { id: 'siemreap-kh', name: 'Siem Reap', country: 'Cambodia', image: 'https://images.unsplash.com/photo-1528127269322-539801943592?auto=format&fit=crop&w=800&q=80', status: 'Recommended', metrics: getMetrics('urban'), localSignals: ["Night market high traffic"], tags: ['Base', 'Culture'], description: 'The gateway to the ruins of Angkor, the seat of the Khmer kingdom.', baseCostPerDay: 45, communityFeedback: getFeedback('Siem Reap') },
+];
+
+// Ensure every destination has a guide mapping - using the previously defined helper
+MOCK_DESTINATIONS.forEach(dest => {
+  if (!MOCK_GUIDES[dest.id]) {
+    MOCK_GUIDES[dest.id] = generateGuides(dest.name, dest.country);
+  }
+});
 
 export const MOCK_ROUTES = (destName: string): TravelRoute[] => [
   { id: 'r1', type: 'rail', time: '12h 30m', ecoScore: 95, crowdLevel: 40, comfort: 85, safety: 98, price: 120 },

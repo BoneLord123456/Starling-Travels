@@ -3,6 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import { MOCK_GUIDES } from '../constants';
 import { Send, MapPin, ShieldAlert, ArrowLeft, Phone, MoreVertical } from 'lucide-react';
+import { TourGuide } from '../types';
 
 const ChatRoom = () => {
   const { guideId } = useParams<{ guideId: string }>();
@@ -15,7 +16,8 @@ const ChatRoom = () => {
   const [input, setInput] = useState('');
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  const guide = Object.values(MOCK_GUIDES).flat().find(g => g.id === guideId);
+  // Flatten the guides record and find the specific guide with proper typing
+  const guide = (Object.values(MOCK_GUIDES).flat() as TourGuide[]).find(g => g.id === guideId);
 
   useEffect(() => {
     scrollRef.current?.scrollIntoView({ behavior: 'smooth' });

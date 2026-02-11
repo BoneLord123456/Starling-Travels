@@ -1,6 +1,6 @@
 
-import React from 'react';
-import { HashRouter as Router, Routes, Route } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { HashRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Layout from './components/Layout';
 import Discover from './views/Discover';
 import DestinationDetail from './views/DestinationDetail';
@@ -14,8 +14,29 @@ import AIChat from './views/AIChat';
 import TripOptimizer from './views/TripOptimizer';
 import Premium from './views/Premium';
 import Settings from './views/Settings';
+import Onboarding from './views/Onboarding';
+import { User } from './types';
 
 const App: React.FC = () => {
+  const [user, setUser] = useState<User | null>(() => {
+    const saved = localStorage.getItem('ecobalance-user');
+    return saved ? JSON.parse(saved) : null;
+  });
+
+  const handleOnboarding = (userData: { name: string; email: string; passwordHash: string }) => {
+    const newUser: User = {
+      ...userData,
+      isPremium: false,
+      joinedDate: new Date().toISOString()
+    };
+    localStorage.setItem('ecobalance-user', JSON.stringify(newUser));
+    setUser(newUser);
+  };
+
+  if (!user) {
+    return <Onboarding onComplete={handleOnboarding} />;
+  }
+
   return (
     <Router>
       <Layout>
@@ -33,6 +54,7 @@ const App: React.FC = () => {
           <Route path="/chat/:guideId" element={<ChatRoom />} />
           <Route path="/ai-chat/:destId" element={<AIChat />} />
           <Route path="/premium" element={<Premium />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </Layout>
     </Router>

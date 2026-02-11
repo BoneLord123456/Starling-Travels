@@ -5,9 +5,17 @@ import { Link } from 'react-router-dom';
 
 const Profile = () => {
   const [bottles, setBottles] = useState(() => parseInt(localStorage.getItem('starling-bottles') || '12'));
+  const [user, setUser] = useState(() => {
+    const saved = localStorage.getItem('ecobalance-user');
+    return saved ? JSON.parse(saved) : { name: 'Jane Doe', email: 'jane@example.com' };
+  });
 
   useEffect(() => {
-    const handleStorage = () => setBottles(parseInt(localStorage.getItem('starling-bottles') || '12'));
+    const handleStorage = () => {
+      setBottles(parseInt(localStorage.getItem('starling-bottles') || '12'));
+      const saved = localStorage.getItem('ecobalance-user');
+      if (saved) setUser(JSON.parse(saved));
+    };
     window.addEventListener('storage', handleStorage);
     return () => window.removeEventListener('storage', handleStorage);
   }, []);
@@ -29,20 +37,19 @@ const Profile = () => {
       <header className="flex items-center justify-between">
         <div className="flex items-center gap-6">
           <div className="relative">
-            <div className="w-20 h-20 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-400 border-4 border-white shadow-xl overflow-hidden">
-              <img src="https://picsum.photos/seed/starling-user/200" alt="Avatar" className="w-full h-full object-cover" />
+            <div className="w-20 h-20 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-400 border-4 border-white dark:border-slate-800 shadow-xl overflow-hidden">
+              <img src={`https://picsum.photos/seed/${user.email}/200`} alt="Avatar" className="w-full h-full object-cover" />
             </div>
-            <div className="absolute -bottom-1 -right-1 bg-indigo-600 text-white p-1.5 rounded-full border-2 border-white">
+            <div className="absolute -bottom-1 -right-1 bg-indigo-600 text-white p-1.5 rounded-full border-2 border-white dark:border-slate-900">
               <Shield size={16} />
             </div>
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-slate-800 dark:text-white">Jane Starling</h1>
-            <p className="text-slate-500 flex items-center gap-1 text-sm">
-              <MapPin size={14} /> Amsterdam, NL
+            <h1 className="text-2xl font-black text-slate-800 dark:text-white tracking-tight">{user.name}</h1>
+            <p className="text-slate-500 dark:text-slate-400 flex items-center gap-1 text-sm font-medium">
+              <MailIcon className="inline text-slate-400" size={14} /> {user.email}
             </p>
             <div className="mt-2 flex gap-2">
-              {/* Correctly implement user badge instead of misusing ScoreBadge component which expects DestinationStatus */}
               <div className="bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 px-2 py-0.5 rounded-full text-[10px] font-black uppercase border border-emerald-200 dark:border-emerald-800 shadow-sm">
                 Eco-Champ
               </div>
@@ -66,7 +73,7 @@ const Profile = () => {
             <div className="w-8 h-8 rounded-lg bg-slate-50 dark:bg-slate-800 flex items-center justify-center mx-auto">
               {stat.icon}
             </div>
-            <div className="text-lg font-bold text-slate-800 dark:text-white">{stat.value}</div>
+            <div className="text-lg font-bold text-slate-800 dark:text-white tracking-tighter">{stat.value}</div>
             <div className="text-[10px] text-slate-400 font-bold uppercase tracking-tight">{stat.label}</div>
           </div>
         ))}
@@ -80,7 +87,7 @@ const Profile = () => {
         </h2>
         <div className="space-y-3">
           {weeklyChallenges.map(challenge => (
-            <div key={challenge.id} className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-3">
+            <div key={challenge.id} className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-3">
               <div className="flex justify-between items-start">
                 <div>
                   <h3 className="font-bold text-slate-800 dark:text-slate-100 text-sm">{challenge.title}</h3>
@@ -141,17 +148,21 @@ const Profile = () => {
 
       <Link 
         to="/premium"
-        className="bg-indigo-600 rounded-2xl p-6 text-white flex items-center justify-between shadow-indigo-200 dark:shadow-none shadow-xl active:scale-[0.98] transition-transform"
+        className="bg-indigo-600 rounded-3xl p-6 text-white flex items-center justify-between shadow-indigo-200 dark:shadow-none shadow-xl active:scale-[0.98] transition-transform"
       >
         <div className="space-y-1">
           <h3 className="font-bold">Starling Premium Safety</h3>
-          <p className="text-indigo-100 text-xs opacity-80">Access noise-level alerts 24h early.</p>
+          <p className="text-indigo-100 text-xs opacity-80 font-medium">Access noise-level alerts 24h early.</p>
         </div>
         <ChevronRight className="text-indigo-300" />
       </Link>
     </div>
   );
 };
+
+const MailIcon = ({ className, size }: { className?: string, size?: number }) => (
+  <svg className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+);
 
 const TrophyIcon = ({ className }: { className?: string }) => (
   <svg className={className} width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -169,7 +180,7 @@ const Badge = ({ icon, label }: { icon: string, label: string }) => (
     <div className="w-16 h-16 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex items-center justify-center text-3xl shadow-sm hover:scale-110 transition-transform">
       {icon}
     </div>
-    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-tighter text-center w-16 leading-tight">{label}</span>
+    <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-tighter text-center w-16 leading-tight">{label}</span>
   </div>
 );
 
@@ -184,8 +195,8 @@ const ActivityItem = ({ title, subtitle, date, type }: { title: string, subtitle
   };
 
   return (
-    <div className="flex items-center gap-4 bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
-      <div className="w-10 h-10 rounded-lg bg-slate-50 dark:bg-slate-800 flex items-center justify-center shrink-0">
+    <div className="flex items-center gap-4 bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+      <div className="w-10 h-10 rounded-xl bg-slate-50 dark:bg-slate-800 flex items-center justify-center shrink-0">
         {getIcon()}
       </div>
       <div className="flex-1">

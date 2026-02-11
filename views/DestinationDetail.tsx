@@ -4,7 +4,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { MOCK_DESTINATIONS } from '../constants';
 import ScoreBadge from '../components/ScoreBadge';
 import { getDestinationAIOverview } from '../services/geminiService';
-import { Wind, Droplets, Users, Building2, ShieldCheck, Sparkles, Loader2, Megaphone, MessageSquare, Star, UsersRound, MessageCircleWarning, Map, Lock, Crown, AlertTriangle, ArrowLeft, Volume2, TreePine } from 'lucide-react';
+import { Wind, Droplets, Users, Building2, ShieldCheck, Sparkles, Loader2, Megaphone, MessageSquare, Star, UsersRound, MessageCircleWarning, Map, Lock, Crown, AlertTriangle, ArrowLeft, Volume2, TreePine, Info } from 'lucide-react';
 
 const DestinationDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -37,13 +37,23 @@ const DestinationDetail = () => {
     return () => window.removeEventListener('storage', handleStorage);
   }, []);
 
+  const handleImageError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
+    const target = e.target as HTMLImageElement;
+    target.src = "https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&w=800&q=80";
+  };
+
   return (
     <div className="animate-in fade-in duration-500 pb-20">
       <div className="relative h-64 md:h-80">
-        <img src={destination.image} alt={destination.name} className="w-full h-full object-cover" />
+        <img 
+          src={destination.image} 
+          alt={destination.name} 
+          onError={handleImageError}
+          className="w-full h-full object-cover" 
+        />
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
         <div className="absolute top-4 left-4">
-          <button onClick={() => navigate(-1)} className="p-2 bg-white/20 backdrop-blur-md rounded-full text-white">
+          <button onClick={() => navigate(-1)} className="p-2 bg-white/20 backdrop-blur-md rounded-full text-white transition-transform active:scale-90">
             <ArrowLeft size={20} />
           </button>
         </div>
@@ -162,40 +172,50 @@ const DestinationDetail = () => {
         </section>
 
         {/* Metrics Grid */}
-        <section className="grid grid-cols-2 md:grid-cols-3 gap-4">
+        <section className="grid grid-cols-1 gap-4">
           <MetricCard 
             icon={<Wind size={18} />} 
             label="Air Quality" 
             value={destination.metrics.airQualityAQI} 
             unit="AQI" 
+            reference="0–50 AQI"
+            description="Measures particulate matter and ozone in the atmosphere."
             thresholds={{ good: 50, mod: 100 }}
           />
           <MetricCard 
             icon={<Droplets size={18} />} 
-            label="Water" 
+            label="Water Quality" 
             value={destination.metrics.waterPPM} 
             unit="PPM"
+            reference="< 100 PPM"
+            description="Total dissolved solids and mineral concentration in local sources."
             thresholds={{ good: 100, mod: 300 }}
           />
           <MetricCard 
             icon={<TreePine size={18} />} 
-            label="Soil" 
+            label="Soil Health" 
             value={destination.metrics.soilPPM} 
             unit="PPM"
-            thresholds={{ good: 50, mod: 150 }}
+            reference="< 50 PPM"
+            description="Detection of chemical residues and industrial runoff in earth."
+            thresholds={{ good: 50, mod: 200 }}
           />
           <MetricCard 
             icon={<Volume2 size={18} />} 
-            label="Noise" 
+            label="Noise Level" 
             value={destination.metrics.noiseDB} 
             unit="dB"
+            reference="40–60 dB"
+            description="Ambient sound pressure levels in urban/natural centers."
             thresholds={{ good: 50, mod: 75 }}
           />
           <MetricCard 
             icon={<Users size={18} />} 
-            label="Crowds" 
+            label="Crowd Density" 
             value={destination.metrics.crowdDensity} 
-            unit="per m²"
+            unit="ppl/m²"
+            reference="< 0.5 ppl/m²"
+            description="Real-time density of people in key visitor districts."
             thresholds={{ good: 0.5, mod: 2.0 }}
           />
           <MetricCard 
@@ -203,6 +223,8 @@ const DestinationDetail = () => {
             label="Infra Load" 
             value={destination.metrics.infraLoad} 
             unit="%"
+            reference="< 40%"
+            description="Utilization percentage of local utilities and waste systems."
             thresholds={{ good: 30, mod: 70 }}
           />
         </section>
@@ -233,32 +255,48 @@ const DestinationDetail = () => {
   );
 };
 
-const MetricCard = ({ icon, label, value, unit, thresholds }: { icon: any, label: string, value: number, unit: string, thresholds: { good: number, mod: number } }) => {
-  const getLabelAndColor = () => {
-    if (value <= thresholds.good) return { text: 'Excellent', color: 'text-emerald-500', bg: 'bg-emerald-500' };
-    if (value <= thresholds.mod) return { text: 'Moderate', color: 'text-amber-500', bg: 'bg-amber-500' };
-    return { text: 'Critical', color: 'text-rose-500', bg: 'bg-rose-500' };
+const MetricCard = ({ icon, label, value, unit, reference, description, thresholds }: { icon: any, label: string, value: number, unit: string, reference: string, description: string, thresholds: { good: number, mod: number } }) => {
+  const getInterpretation = () => {
+    if (value <= thresholds.good) return { text: 'Excellent', color: 'text-emerald-500', bg: 'bg-emerald-500/10' };
+    if (value <= thresholds.mod) return { text: 'Moderate', color: 'text-amber-500', bg: 'bg-amber-500/10' };
+    return { text: 'Critical', color: 'text-rose-500', bg: 'bg-rose-500/10' };
   };
 
-  const status = getLabelAndColor();
+  const status = getInterpretation();
 
   return (
-    <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 flex flex-col items-center text-center shadow-sm relative overflow-hidden">
-      <div className={`p-2 rounded-lg bg-slate-50 dark:bg-slate-800 text-slate-500 mb-2`}>
+    <div className="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col md:flex-row md:items-center gap-4 transition-all hover:border-emerald-500/30">
+      <div className={`p-4 rounded-2xl shrink-0 self-start ${status.bg} ${status.color}`}>
         {icon}
       </div>
-      <div className="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase mb-1">{label}</div>
-      <div className="font-black text-slate-800 dark:text-white text-xl">
-        {value} <span className="text-[10px] opacity-40 font-bold">{unit}</span>
-      </div>
-      <div className={`text-[9px] font-black uppercase mt-1 tracking-tighter ${status.color}`}>
-        {status.text}
-      </div>
-      <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-slate-100 dark:bg-slate-800">
-        <div 
-          className={`h-full ${status.bg}`} 
-          style={{ width: `${Math.min(100, (value / (thresholds.mod * 1.5)) * 100)}%` }} 
-        />
+      
+      <div className="flex-1 space-y-2">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <h4 className="font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+              {label} 
+              <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-black uppercase tracking-tighter ${status.bg} ${status.color}`}>
+                {status.text}
+              </span>
+            </h4>
+            <p className="text-[10px] text-slate-400 font-medium">{description}</p>
+          </div>
+          <div className="text-right">
+            <div className="text-xl font-black text-slate-900 dark:text-white">
+              {Math.round(value)} <span className="text-xs opacity-40 font-bold uppercase">{unit}</span>
+            </div>
+            <div className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">
+              Ref (Safe): {reference}
+            </div>
+          </div>
+        </div>
+        
+        <div className="relative w-full h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+          <div 
+            className={`h-full transition-all duration-1000 ${status.text.includes('Excellent') ? 'bg-emerald-500' : status.text.includes('Moderate') ? 'bg-amber-500' : 'bg-rose-500'}`}
+            style={{ width: `${Math.min(100, (value / (thresholds.mod * 1.5)) * 100)}%` }}
+          />
+        </div>
       </div>
     </div>
   );
