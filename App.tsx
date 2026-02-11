@@ -1,0 +1,42 @@
+
+import React from 'react';
+import { HashRouter as Router, Routes, Route } from 'react-router-dom';
+import Layout from './components/Layout';
+import Discover from './views/Discover';
+import DestinationDetail from './views/DestinationDetail';
+import WasteSubmission from './views/WasteSubmission';
+import Profile from './views/Profile';
+import Dashboard from './views/Dashboard';
+import Leaderboard from './views/Leaderboard';
+import GuideMarketplace from './views/GuideMarketplace';
+import ChatRoom from './views/ChatRoom';
+import AIChat from './views/AIChat';
+import TripOptimizer from './views/TripOptimizer';
+import Premium from './views/Premium';
+import Settings from './views/Settings';
+
+const App: React.FC = () => {
+  return (
+    <Router>
+      <Layout>
+        <Routes>
+          <Route path="/" element={<Discover />} />
+          <Route path="/destination/:id" element={<DestinationDetail />} />
+          <Route path="/plan/:destId" element={<TripOptimizer />} />
+          <Route path="/waste" element={<WasteSubmission />} />
+          <Route path="/leaderboard" element={<Leaderboard />} />
+          <Route path="/profile" element={<Profile />} />
+          <Route path="/settings" element={<Settings />} />
+          <Route path="/settings/subscription" element={<Premium />} />
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/guides/:destId" element={<GuideMarketplace />} />
+          <Route path="/chat/:guideId" element={<ChatRoom />} />
+          <Route path="/ai-chat/:destId" element={<AIChat />} />
+          <Route path="/premium" element={<Premium />} />
+        </Routes>
+      </Layout>
+    </Router>
+  );
+};
+
+export default App;
