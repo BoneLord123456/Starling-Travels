@@ -1,6 +1,6 @@
 {
-  "name": "Starling Travels",
-  "description": "Starling Travels: Safest travelling management ever made. AI-powered sustainable tourism platform guiding travelers toward lower-impact destinations with community insights and gamified rewards.",
+  "name": "EcoBalance",
+  "description": "EcoBalance: AI-powered sustainable tourism platform guiding travelers toward lower-impact destinations with raw sensor data and real-time environmental metrics.",
   "requestFramePermissions": [
     "camera"
   ]

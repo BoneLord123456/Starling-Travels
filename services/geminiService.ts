@@ -107,7 +107,7 @@ export const getTripOptimizationInsight = async (destination: Destination, budge
 
 export const getHonestPlaceAdvice = async (destinationName: string, destinationMetrics: any, status: string, context: string, userMessage: string) => {
   const prompt = `
-    You are an AI Travel Advisor in 'Starling Travels' app. Mode: BRUTALLY HONEST.
+    You are an AI Travel Advisor in 'EcoBalance' app. Mode: BRUTALLY HONEST.
     LOWER metrics are generally BETTER. Use real-world standards (AQI, dB, PPM).
     ${destinationName} Safety Status: ${status}.
     Metrics: ${JSON.stringify(destinationMetrics)}

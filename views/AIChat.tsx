@@ -141,7 +141,7 @@ const AIChat = () => {
                 ? 'bg-slate-800 text-white rounded-tr-none shadow-lg' 
                 : 'bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 rounded-tl-none border border-rose-100 dark:border-rose-900 shadow-sm'
             }`}>
-              {m.role === 'ai' && <div className="text-[10px] font-bold text-rose-500 uppercase mb-1 flex items-center gap-1"><Sparkles size={10} /> Starling Truth</div>}
+              {m.role === 'ai' && <div className="text-[10px] font-bold text-rose-500 uppercase mb-1 flex items-center gap-1"><Sparkles size={10} /> EcoBalance Truth</div>}
               {m.text}
               <div className="text-[9px] mt-2 opacity-60 text-right">
                 {m.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}

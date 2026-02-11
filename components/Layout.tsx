@@ -6,7 +6,7 @@ import { Link, useLocation } from 'react-router-dom';
 const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const location = useLocation();
   const [theme, setTheme] = useState<'light' | 'dark'>(() => {
-    const saved = localStorage.getItem('starling-theme');
+    const saved = localStorage.getItem('ecobalance-theme');
     if (saved === 'dark' || saved === 'light') return saved;
     return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
   });
@@ -17,10 +17,9 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
   useEffect(() => {
     document.documentElement.classList.toggle('dark', theme === 'dark');
-    localStorage.setItem('starling-theme', theme);
+    localStorage.setItem('ecobalance-theme', theme);
   }, [theme]);
 
-  // Sync premium status (rough way since we don't have a context here, but views check it)
   useEffect(() => {
     const handleStorage = () => {
       setIsPremium(localStorage.getItem('starling-premium') === 'true');
@@ -45,14 +44,14 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
       {/* Header */}
       <header className="sticky top-0 z-50 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-4 py-3 flex justify-between items-center shadow-sm">
         <div className="flex items-center gap-2">
-          <div className="bg-indigo-600 p-1.5 rounded-lg shadow-indigo-200 dark:shadow-indigo-900 shadow-md">
+          <div className="bg-emerald-600 p-1.5 rounded-lg shadow-emerald-200 dark:shadow-emerald-900 shadow-md">
             <div className="w-5 h-5 border-2 border-white rounded-full flex items-center justify-center">
               <div className="w-1.5 h-1.5 bg-white rounded-full"></div>
             </div>
           </div>
           <div className="flex flex-col">
-            <span className="font-bold text-lg text-slate-800 dark:text-slate-100 leading-tight">Starling Travels</span>
-            <span className="text-[10px] text-slate-400 font-medium uppercase tracking-tighter">Safest Management Ever</span>
+            <span className="font-bold text-lg text-slate-800 dark:text-slate-100 leading-tight">EcoBalance</span>
+            <span className="text-[10px] text-slate-400 font-medium uppercase tracking-tighter">AI Tourism Intelligence</span>
           </div>
         </div>
         <div className="flex items-center gap-3">
@@ -63,7 +62,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
           >
             {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
           </button>
-          <div className="w-8 h-8 rounded-full bg-indigo-100 dark:bg-indigo-900 flex items-center justify-center text-indigo-700 dark:text-indigo-300 font-semibold text-xs border border-indigo-200 dark:border-indigo-800 relative">
+          <div className="w-8 h-8 rounded-full bg-emerald-100 dark:bg-emerald-900 flex items-center justify-center text-emerald-700 dark:text-emerald-300 font-semibold text-xs border border-emerald-200 dark:border-emerald-800 relative">
             JD
             {isPremium && (
               <div className="absolute -top-1 -right-1 w-3 h-3 bg-amber-400 rounded-full border-2 border-white dark:border-slate-900" />
@@ -86,7 +85,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
               key={item.path} 
               to={item.path}
               className={`flex flex-col items-center gap-1 transition-all duration-300 ${
-                isActive ? 'text-indigo-600 dark:text-indigo-400 scale-110' : 'text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300'
+                isActive ? 'text-emerald-600 dark:text-emerald-400 scale-110' : 'text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300'
               }`}
             >
               {item.icon}

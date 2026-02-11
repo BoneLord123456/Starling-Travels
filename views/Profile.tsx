@@ -2,7 +2,6 @@
 import React, { useState, useEffect } from 'react';
 import { Award, TreePine, MapPin, TrendingUp, ChevronRight, Globe, Shield, Zap, Target, CheckCircle2, Settings as SettingsIcon, Droplets } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import ScoreBadge from '../components/ScoreBadge';
 
 const Profile = () => {
   const [bottles, setBottles] = useState(() => parseInt(localStorage.getItem('starling-bottles') || '12'));
@@ -43,7 +42,10 @@ const Profile = () => {
               <MapPin size={14} /> Amsterdam, NL
             </p>
             <div className="mt-2 flex gap-2">
-              <ScoreBadge score={12} label="Eco-Champ" size="sm" />
+              {/* Correctly implement user badge instead of misusing ScoreBadge component which expects DestinationStatus */}
+              <div className="bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 px-2 py-0.5 rounded-full text-[10px] font-black uppercase border border-emerald-200 dark:border-emerald-800 shadow-sm">
+                Eco-Champ
+              </div>
               <div className="bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 px-2 py-0.5 rounded-full text-xs font-bold flex items-center gap-1">
                 <Zap size={10} fill="currentColor" /> Lvl 14
               </div>
