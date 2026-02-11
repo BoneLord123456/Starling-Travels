@@ -82,7 +82,7 @@ const Settings = () => {
 
       <footer className="text-center pt-8">
         <div className="text-[10px] font-bold text-slate-300 dark:text-slate-600 uppercase tracking-tighter">
-          Starling Travels v2.4.0 (Safest Edition)
+          EcoBalance v1.0.0 (Sustainable Edition)
         </div>
       </footer>
     </div>

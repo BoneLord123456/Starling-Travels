@@ -135,7 +135,7 @@ const DestinationDetail = () => {
           <div className="relative z-10 space-y-4">
             <div className="flex items-center gap-2 text-indigo-800 dark:text-indigo-400 font-bold uppercase text-xs tracking-widest">
               <Sparkles size={16} />
-              <span>Starling AI Analysis</span>
+              <span>EcoBalance AI Analysis</span>
             </div>
             
             {loading ? (
