@@ -1,12 +1,73 @@
 
 import React, { useEffect, useState, useCallback } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { MOCK_DESTINATIONS } from '../constants';
 import { apiService } from '../services/apiService';
 import ScoreBadge from '../components/ScoreBadge';
 import { getDestinationAIOverview } from '../services/geminiService';
-import { Wind, Droplets, Users, Building2, ShieldCheck, Sparkles, Loader2, Megaphone, MessageSquare, Star, UsersRound, MessageCircleWarning, Map, Lock, Crown, AlertTriangle, ArrowLeft, Volume2, TreePine, Info, Activity, Zap, Send } from 'lucide-react';
+import { Wind, Droplets, Users, ShieldCheck, Sparkles, Loader2, Megaphone, MessageSquare, Star, UsersRound, MessageCircleWarning, Map, Lock, Crown, ArrowLeft, Volume2, Activity, Zap, Send, Thermometer } from 'lucide-react';
 import { Destination, CommunityComment } from '../types';
+
+const EcoStressGauge = ({ value }: { value: number }) => {
+  const rotation = (value / 100) * 180 - 90; // Arc is 180 degrees, from -90 to +90
+  
+  return (
+    <div className="flex flex-col items-center justify-center p-4 bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl rounded-3xl border border-white/20 dark:border-slate-800/50 shadow-2xl relative w-64 mx-auto z-40">
+      <div className="absolute top-2 left-1/2 -translate-x-1/2 text-[9px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-[0.2em] flex items-center gap-1.5 whitespace-nowrap">
+        <Activity size={12} className="text-emerald-500" />
+        Live Eco Stress
+      </div>
+      
+      <div className="relative w-40 h-24 mt-6 overflow-hidden">
+        {/* Arc Track with Gradient */}
+        <svg viewBox="0 0 100 55" className="w-full h-full">
+          <defs>
+            <linearGradient id="gaugeGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stopColor="#10b981" />   {/* Emerald */}
+              <stop offset="50%" stopColor="#f59e0b" />  {/* Amber */}
+              <stop offset="100%" stopColor="#ef4444" /> {/* Rose */}
+            </linearGradient>
+          </defs>
+          <path 
+            d="M 10 50 A 40 40 0 0 1 90 50" 
+            fill="none" 
+            stroke="#e2e8f0" 
+            strokeWidth="10" 
+            className="dark:stroke-slate-800"
+            strokeLinecap="round"
+          />
+          <path 
+            d="M 10 50 A 40 40 0 0 1 90 50" 
+            fill="none" 
+            stroke="url(#gaugeGradient)" 
+            strokeWidth="10" 
+            strokeLinecap="round"
+            strokeDasharray="125.6"
+            strokeDashoffset="0"
+            opacity="0.9"
+          />
+        </svg>
+
+        {/* Needle */}
+        <div 
+          className="absolute bottom-0 left-1/2 w-1 h-16 -ml-0.5 bg-slate-900 dark:bg-white rounded-full origin-bottom transition-transform duration-1000 cubic-bezier(0.34, 1.56, 0.64, 1)"
+          style={{ transform: `rotate(${rotation}deg)` }}
+        >
+          <div className="absolute -top-1.5 -left-1.5 w-4 h-4 bg-slate-900 dark:bg-white rounded-full shadow-lg flex items-center justify-center">
+             <div className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse" />
+          </div>
+        </div>
+      </div>
+
+      <div className="text-center -mt-2 pb-2">
+        <div className="text-3xl font-black text-slate-900 dark:text-white tabular-nums">
+          {value.toFixed(1)}
+        </div>
+        <div className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Index Units</div>
+      </div>
+    </div>
+  );
+};
 
 const DestinationDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -16,7 +77,6 @@ const DestinationDetail = () => {
   const [loadingAI, setLoadingAI] = useState(false);
   const [isPremium, setIsPremium] = useState(() => localStorage.getItem('starling-premium') === 'true');
   
-  // Review form state
   const [reviewText, setReviewText] = useState('');
   const [reviewRating, setReviewRating] = useState(5);
   const [submittingReview, setSubmittingReview] = useState(false);
@@ -75,7 +135,6 @@ const DestinationDetail = () => {
     if (!reviewText.trim() || !destination) return;
     
     setSubmittingReview(true);
-    // Simulate API delay
     await new Promise(r => setTimeout(r, 800));
     
     const newComment: CommunityComment = {
@@ -116,38 +175,31 @@ const DestinationDetail = () => {
             <ArrowLeft size={20} />
           </button>
         </div>
-        <div className="absolute bottom-6 left-6 right-6 flex justify-between items-end">
-          <div>
+        <div className="absolute bottom-12 left-6 right-6 flex justify-between items-end">
+          <div className="max-w-[60%]">
             <div className="flex items-center gap-2 mb-1">
-              <h1 className="text-3xl font-bold text-white shadow-sm">{destination.name}</h1>
+              <h1 className="text-3xl font-black text-white drop-shadow-lg tracking-tight leading-none">{destination.name}</h1>
               {isLive && (
-                <div className="bg-rose-500 text-white px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest animate-pulse">Live Stress Feed</div>
+                <div className="bg-rose-500 text-white px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest animate-pulse shadow-lg">Live Feed</div>
               )}
             </div>
-            <p className="text-white/80">{destination.country}</p>
+            <p className="text-white/80 font-bold text-sm tracking-wide">{destination.country}</p>
           </div>
           <ScoreBadge status={destination.status} size="lg" />
         </div>
+        
+        {/* Speedy-Gauge straddling the boundary */}
+        <div className="absolute left-1/2 -bottom-16 -translate-x-1/2">
+           <EcoStressGauge value={destination.metrics.ecoStress || 15} />
+        </div>
       </div>
 
-      <div className="p-6 space-y-8">
-        
-        {/* Live Sync Status */}
-        {isLive && (
-          <div className="bg-slate-900 text-slate-100 p-3 rounded-xl flex items-center justify-between text-[10px] font-bold uppercase tracking-widest border border-slate-800">
-            <div className="flex items-center gap-2">
-              <Activity size={14} className="text-emerald-500" />
-              Real-time Stress Telemetry Active
-            </div>
-            <div className="opacity-50 font-mono">Sync: 5s</div>
-          </div>
-        )}
-
+      <div className="p-6 pt-20 space-y-8">
         {/* Action Bar */}
         <section className="space-y-4">
           <Link 
             to={`/plan/${destination.id}`}
-            className="w-full flex items-center justify-center gap-2 p-4 bg-slate-900 dark:bg-slate-800 text-white rounded-2xl font-bold hover:bg-black transition-colors shadow-xl"
+            className="w-full flex items-center justify-center gap-2 p-4 bg-slate-900 dark:bg-slate-800 text-white rounded-2xl font-bold hover:bg-black transition-colors shadow-2xl"
           >
             <Map size={20} />
             Optimize My Safest Trip Plan
@@ -176,7 +228,7 @@ const DestinationDetail = () => {
 
         {/* Local Signals */}
         {destination.localSignals.length > 0 && (
-          <section className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-2xl p-5 space-y-3">
+          <section className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-2xl p-5 space-y-3 shadow-sm">
             <div className="flex items-center gap-2 text-amber-700 dark:text-amber-400 font-bold text-sm uppercase tracking-wider">
               <Megaphone size={18} />
               <span>Real-time Local Signals</span>
@@ -193,13 +245,13 @@ const DestinationDetail = () => {
         )}
 
         {/* AI Analysis */}
-        <section className="bg-indigo-50 dark:bg-indigo-950/30 border border-indigo-100 dark:border-indigo-900/50 rounded-2xl p-6 relative overflow-hidden">
+        <section className="bg-indigo-50 dark:bg-indigo-950/30 border border-indigo-100 dark:border-indigo-900/50 rounded-2xl p-6 relative overflow-hidden shadow-sm">
           <div className="absolute top-0 right-0 p-4 text-indigo-200 dark:text-indigo-800">
             <Sparkles size={40} />
           </div>
           <div className="relative z-10 space-y-4">
-            <div className="flex items-center gap-2 text-indigo-800 dark:text-indigo-400 font-bold uppercase text-xs tracking-widest">
-              <Sparkles size={16} />
+            <div className="flex items-center gap-2 text-indigo-800 dark:text-indigo-400 font-black uppercase text-[10px] tracking-widest">
+              <Sparkles size={14} />
               <span>EcoBalance AI Insight</span>
             </div>
             
@@ -249,13 +301,13 @@ const DestinationDetail = () => {
             isLiveStress={isLive}
           />
           <MetricCard 
-            icon={<Building2 size={18} />} 
-            label="Infra Load" 
-            value={destination.metrics.infraLoad} 
-            unit="%"
-            reference="< 40%"
-            description="Utilization percentage of local utilities and waste systems."
-            thresholds={{ safe: 30, mod: 70, unsafe: 90 }}
+            icon={<Thermometer size={18} />} 
+            label="Temperature" 
+            value={destination.metrics.temperature || 24} 
+            unit="°C"
+            reference="Comfort: 18–28°C"
+            description="Ambient temperature in local degrees Celsius."
+            thresholds={{ safe: 28, mod: 35, unsafe: 40 }}
             isLiveStress={false}
           />
           <MetricCard 
@@ -300,34 +352,33 @@ const DestinationDetail = () => {
             <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{destination.communityFeedback.length} Verified Reviews</span>
           </div>
 
-          {/* Add Review Form */}
-          <form onSubmit={handleAddReview} className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
+          <form onSubmit={handleAddReview} className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-4 transition-all focus-within:ring-2 focus-within:ring-indigo-500/10">
             <div className="flex items-center justify-between">
-              <label className="text-[10px] font-bold text-slate-400 uppercase">Write a review</label>
+              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Rate your experience</label>
               <div className="flex items-center gap-1">
                 {[1, 2, 3, 4, 5].map((star) => (
                   <button 
                     key={star} 
                     type="button" 
                     onClick={() => setReviewRating(star)}
-                    className={`${star <= reviewRating ? 'text-amber-400' : 'text-slate-300'} transition-colors`}
+                    className={`${star <= reviewRating ? 'text-amber-400' : 'text-slate-300'} transition-colors hover:scale-110 active:scale-90`}
                   >
-                    <Star size={16} fill={star <= reviewRating ? "currentColor" : "none"} />
+                    <Star size={18} fill={star <= reviewRating ? "currentColor" : "none"} />
                   </button>
                 ))}
               </div>
             </div>
             <div className="relative">
               <textarea 
-                placeholder="Share your experience..." 
+                placeholder="Share your honest experience..." 
                 value={reviewText}
                 onChange={(e) => setReviewText(e.target.value)}
-                className="w-full bg-slate-50 dark:bg-slate-800 rounded-xl p-4 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 dark:text-white min-h-[100px] resize-none border border-slate-100 dark:border-slate-700"
+                className="w-full bg-slate-50 dark:bg-slate-800 rounded-xl p-4 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 dark:text-white min-h-[100px] resize-none border border-slate-100 dark:border-slate-700 font-medium"
               />
               <button 
                 type="submit"
                 disabled={submittingReview || !reviewText.trim()}
-                className="absolute bottom-3 right-3 p-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50"
+                className="absolute bottom-3 right-3 p-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-all disabled:opacity-50 active:scale-95 shadow-md"
               >
                 {submittingReview ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
               </button>
@@ -336,15 +387,20 @@ const DestinationDetail = () => {
 
           <div className="space-y-4">
             {destination.communityFeedback.map((fb) => (
-              <div key={fb.id} className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-100 dark:border-slate-800 shadow-sm flex flex-col gap-2 animate-in fade-in slide-in-from-top-2 duration-300">
+              <div key={fb.id} className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm flex flex-col gap-3 animate-in fade-in slide-in-from-top-2 duration-300">
                 <div className="flex justify-between items-center">
-                  <span className="font-bold text-slate-700 dark:text-slate-200 text-sm">{fb.user}</span>
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center font-black text-[10px] text-slate-500">
+                      {fb.user.substring(0, 1)}
+                    </div>
+                    <span className="font-bold text-slate-700 dark:text-slate-200 text-sm">{fb.user}</span>
+                  </div>
                   <div className="flex gap-0.5 text-amber-400">
                     {[...Array(5)].map((_, i) => <Star key={i} size={12} fill={i < fb.rating ? "currentColor" : "none"} />)}
                   </div>
                 </div>
-                <p className="text-sm text-slate-600 dark:text-slate-400 italic">"{fb.comment}"</p>
-                <span className="text-[10px] text-slate-400 font-bold uppercase">{fb.date}</span>
+                <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">"{fb.comment}"</p>
+                <span className="text-[9px] text-slate-400 font-black uppercase tracking-widest">{fb.date}</span>
               </div>
             ))}
           </div>
@@ -365,28 +421,28 @@ const MetricCard = ({ icon, label, value, unit, reference, description, threshol
   const status = getInterpretation();
 
   return (
-    <div className="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col md:flex-row md:items-center gap-4 transition-all hover:border-emerald-500/30">
-      <div className={`p-4 rounded-2xl shrink-0 self-start ${status.bg} ${status.color}`}>
+    <div className="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col md:flex-row md:items-center gap-4 transition-all hover:border-indigo-500/30">
+      <div className={`p-4 rounded-2xl shrink-0 self-start ${status.bg} ${status.color} shadow-inner`}>
         {icon}
       </div>
       
       <div className="flex-1 space-y-2">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div>
-            <h4 className="font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+            <h4 className="font-black text-slate-900 dark:text-white flex items-center gap-1.5 text-sm uppercase tracking-tight">
               {label} 
-              <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-black uppercase tracking-tighter ${status.bg} ${status.color}`}>
+              <span className={`text-[9px] px-2 py-0.5 rounded-full font-black uppercase tracking-tighter ${status.bg} ${status.color} border border-current/10`}>
                 {status.text}
               </span>
             </h4>
-            <p className="text-[10px] text-slate-400 font-medium">{description}</p>
+            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-tighter opacity-70">{description}</p>
           </div>
           <div className="text-right">
-            <div className="text-xl font-black text-slate-900 dark:text-white">
-              {value.toFixed(1)} <span className="text-xs opacity-40 font-bold uppercase">{unit}</span>
+            <div className="text-xl font-black text-slate-900 dark:text-white tabular-nums">
+              {value.toFixed(1)} <span className="text-[10px] opacity-40 font-black uppercase tracking-tighter">{unit}</span>
             </div>
-            <div className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">
-              {reference}
+            <div className="text-[9px] font-black text-slate-400 uppercase tracking-widest opacity-60">
+              Ref: {reference}
             </div>
           </div>
         </div>

@@ -73,7 +73,7 @@ export const apiService = {
        * Index 2 (C): SoilRaw
        * Index 3 (D): SoundStress -> noiseDB (Reading out of 100)
        * Index 4 (E): SoilStress -> soilPPM (Reading out of 100)
-       * Index 5 (F): EcoStress
+       * Index 5 (F): EcoStress -> ecoStress (Gauge out of 100)
        * Index 6 (G): Status
        * Index 7 (H): Advisory
        */
@@ -89,6 +89,8 @@ export const apiService = {
           noiseDB: this.cleanNum(latestData[3]), // Use SoundStress (Col D)
           crowdDensity: demoMock?.metrics.crowdDensity || 0.2,
           infraLoad: demoMock?.metrics.infraLoad || 20,
+          ecoStress: this.cleanNum(latestData[5]), // Use EcoStress (Col F)
+          temperature: 24.5, // Mock value as per user request for "normal" demo values
         },
         status: this.mapStatus(latestData[6]),
         lastSync: latestData[0] || new Date().toLocaleTimeString(),
@@ -105,36 +107,42 @@ export const apiService = {
     const liveData = await this.fetchLiveDemoData();
     
     return MOCK_DESTINATIONS.map(d => {
+      const baseMetrics = d.metrics || {
+        airQualityAQI: 20,
+        waterPPM: 30,
+        soilPPM: 10,
+        noiseDB: 40,
+        crowdDensity: 0.2,
+        infraLoad: 15,
+        temperature: 22,
+        ecoStress: 10
+      };
+
       if (d.id === DEMO_PLACE_ID && liveData) {
         return { 
           ...d, 
-          metrics: liveData.metrics || d.metrics, 
+          metrics: { ...baseMetrics, ...liveData.metrics }, 
           status: liveData.status || d.status,
           localSignals: liveData.localSignals || d.localSignals,
           description: `Live Feed Active. Last reading: ${liveData.lastSync}`
         } as Destination;
       }
-      return d;
+      
+      // Ensure all destinations have the new metrics fields
+      return {
+        ...d,
+        metrics: {
+          ...baseMetrics,
+          temperature: baseMetrics.temperature || 22,
+          ecoStress: baseMetrics.ecoStress || 15
+        }
+      } as Destination;
     });
   },
 
   async getDestinationById(id: string): Promise<Destination | undefined> {
-    const destination = MOCK_DESTINATIONS.find(d => d.id === id);
-    if (!destination) return undefined;
-
-    if (id === DEMO_PLACE_ID) {
-      const liveData = await this.fetchLiveDemoData();
-      if (liveData) {
-        return { 
-          ...destination, 
-          metrics: liveData.metrics || destination.metrics, 
-          status: liveData.status || destination.status,
-          localSignals: liveData.localSignals || destination.localSignals,
-          description: `Live Feed Active. Last reading: ${liveData.lastSync}`
-        } as Destination;
-      }
-    }
-    return destination;
+    const destinations = await this.getDestinations();
+    return destinations.find(d => d.id === id);
   },
 
   async updatePremiumStatus(isPremium: boolean): Promise<void> {

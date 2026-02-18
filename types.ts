@@ -10,10 +10,12 @@ export interface Destination {
   metrics: {
     airQualityAQI: number; // AQI (0-500+)
     waterPPM: number; // Parts Per Million contaminants
-    soilPPM: number; // Soil contamination in PPM
-    noiseDB: number; // Decibels (dB)
+    soilPPM: number; // Soil contamination (Stress 0-100 for live)
+    noiseDB: number; // Decibels (Stress 0-100 for live)
     crowdDensity: number; // People per m²
     infraLoad: number; // % (realistic infrastructure utilization)
+    temperature: number; // Degrees Celsius
+    ecoStress: number; // Aggregate stress 0-100
   };
   localSignals: string[]; 
   communityFeedback: CommunityComment[];

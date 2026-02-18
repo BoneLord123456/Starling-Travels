@@ -1,4 +1,3 @@
-
 import { Destination, TourGuide, TravelRoute, CommunityComment } from './types';
 
 // Helper for mock feedback
@@ -8,18 +7,19 @@ const getFeedback = (destName: string): CommunityComment[] => [
 ];
 
 // Helper to generate consistent yet varied metrics for large lists
+// FIX: Added temperature and ecoStress properties to satisfy the Destination interface requirements.
 const getMetrics = (type: 'nature' | 'urban' | 'industrial' | 'remote') => {
   switch (type) {
     case 'nature':
-      return { airQualityAQI: 15 + Math.random() * 20, waterPPM: 30 + Math.random() * 40, soilPPM: 10 + Math.random() * 20, noiseDB: 30 + Math.random() * 15, crowdDensity: 0.1 + Math.random() * 0.4, infraLoad: 10 + Math.random() * 20 };
+      return { airQualityAQI: 15 + Math.random() * 20, waterPPM: 30 + Math.random() * 40, soilPPM: 10 + Math.random() * 20, noiseDB: 30 + Math.random() * 15, crowdDensity: 0.1 + Math.random() * 0.4, infraLoad: 10 + Math.random() * 20, temperature: 18 + Math.random() * 8, ecoStress: 5 + Math.random() * 15 };
     case 'urban':
-      return { airQualityAQI: 60 + Math.random() * 60, waterPPM: 150 + Math.random() * 100, soilPPM: 80 + Math.random() * 80, noiseDB: 65 + Math.random() * 20, crowdDensity: 1.5 + Math.random() * 2.5, infraLoad: 60 + Math.random() * 30 };
+      return { airQualityAQI: 60 + Math.random() * 60, waterPPM: 150 + Math.random() * 100, soilPPM: 80 + Math.random() * 80, noiseDB: 65 + Math.random() * 20, crowdDensity: 1.5 + Math.random() * 2.5, infraLoad: 60 + Math.random() * 30, temperature: 22 + Math.random() * 10, ecoStress: 40 + Math.random() * 30 };
     case 'industrial':
-      return { airQualityAQI: 140 + Math.random() * 100, waterPPM: 400 + Math.random() * 200, soilPPM: 200 + Math.random() * 150, noiseDB: 80 + Math.random() * 15, crowdDensity: 2.0 + Math.random() * 2.0, infraLoad: 85 + Math.random() * 15 };
+      return { airQualityAQI: 140 + Math.random() * 100, waterPPM: 400 + Math.random() * 200, soilPPM: 200 + Math.random() * 150, noiseDB: 80 + Math.random() * 15, crowdDensity: 2.0 + Math.random() * 2.0, infraLoad: 85 + Math.random() * 15, temperature: 25 + Math.random() * 12, ecoStress: 70 + Math.random() * 25 };
     case 'remote':
-      return { airQualityAQI: 5 + Math.random() * 10, waterPPM: 10 + Math.random() * 20, soilPPM: 5 + Math.random() * 10, noiseDB: 20 + Math.random() * 10, crowdDensity: 0.05 + Math.random() * 0.1, infraLoad: 5 + Math.random() * 10 };
+      return { airQualityAQI: 5 + Math.random() * 10, waterPPM: 10 + Math.random() * 20, soilPPM: 5 + Math.random() * 10, noiseDB: 20 + Math.random() * 10, crowdDensity: 0.05 + Math.random() * 0.1, infraLoad: 5 + Math.random() * 10, temperature: 10 + Math.random() * 15, ecoStress: 2 + Math.random() * 10 };
     default:
-      return { airQualityAQI: 50, waterPPM: 100, soilPPM: 50, noiseDB: 50, crowdDensity: 1, infraLoad: 50 };
+      return { airQualityAQI: 50, waterPPM: 100, soilPPM: 50, noiseDB: 50, crowdDensity: 1, infraLoad: 50, temperature: 22, ecoStress: 20 };
   }
 };
 
@@ -61,7 +61,8 @@ export const MOCK_DESTINATIONS: Destination[] = [
     country: 'Demo Country', 
     image: 'https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?auto=format&fit=crop&w=1200&q=80', 
     status: 'Recommended', 
-    metrics: { airQualityAQI: 20, waterPPM: 50, soilPPM: 15, noiseDB: 35, crowdDensity: 0.2, infraLoad: 20 }, 
+    // FIX: Added temperature and ecoStress properties to satisfy the Destination interface requirements.
+    metrics: { airQualityAQI: 20, waterPPM: 50, soilPPM: 15, noiseDB: 35, crowdDensity: 0.2, infraLoad: 20, temperature: 24, ecoStress: 15 }, 
     localSignals: ["Live Sensor Feed from Google Sheets Active", "Testing Real-time synchronization"], 
     tags: ['LiveDemo', 'SmartCity'], 
     description: 'This destination is connected to a live Google Sheet. Metrics update dynamically on page refresh.', 
