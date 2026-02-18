@@ -23,7 +23,6 @@ const getMetrics = (type: 'nature' | 'urban' | 'industrial' | 'remote') => {
   }
 };
 
-// Define generateGuides before using it in the loop
 const generateGuides = (destName: string, country: string): TourGuide[] => [
   {
     id: `g-${destName}-1`,
@@ -52,10 +51,24 @@ const generateGuides = (destName: string, country: string): TourGuide[] => [
   }
 ];
 
-// Initialize MOCK_GUIDES to be populated later
 export const MOCK_GUIDES: Record<string, TourGuide[]> = {};
 
 export const MOCK_DESTINATIONS: Destination[] = [
+  // --- DYNAMIC DEMO PLACE (1) ---
+  { 
+    id: 'demo-place-live', 
+    name: 'Demo Place', 
+    country: 'Demo Country', 
+    image: 'https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?auto=format&fit=crop&w=1200&q=80', 
+    status: 'Recommended', 
+    metrics: { airQualityAQI: 20, waterPPM: 50, soilPPM: 15, noiseDB: 35, crowdDensity: 0.2, infraLoad: 20 }, 
+    localSignals: ["Live Sensor Feed from Google Sheets Active", "Testing Real-time synchronization"], 
+    tags: ['LiveDemo', 'SmartCity'], 
+    description: 'This destination is connected to a live Google Sheet. Metrics update dynamically on page refresh.', 
+    baseCostPerDay: 100, 
+    communityFeedback: getFeedback('Demo Place') 
+  },
+
   // --- INDIA (12) ---
   { id: 'jaipur-in', name: 'Jaipur', country: 'India', image: 'https://images.unsplash.com/photo-1599661046289-e31897851bb1?auto=format&fit=crop&w=800&q=80', status: 'Caution Advised', metrics: getMetrics('urban'), localSignals: ["Heritage site restoration", "Hawa Mahal crowds high"], tags: ['Culture', 'History'], description: 'The Pink City of Rajasthan, famous for royal forts and vibrant bazaars.', baseCostPerDay: 55, communityFeedback: getFeedback('Jaipur') },
   { id: 'ladakh-in', name: 'Ladakh', country: 'India', image: 'https://images.unsplash.com/photo-1544085311-11a028465b03?auto=format&fit=crop&w=800&q=80', status: 'Recommended', metrics: getMetrics('remote'), localSignals: ["High altitude warnings", "Oxygen refill points open"], tags: ['Mountains', 'Adventure'], description: 'High-altitude desert in the Himalayas, a haven for mountain lovers.', baseCostPerDay: 65, communityFeedback: getFeedback('Ladakh') },
@@ -158,13 +171,12 @@ export const MOCK_DESTINATIONS: Destination[] = [
   { id: 'hanoi-vn', name: 'Hanoi', country: 'Vietnam', image: 'https://images.unsplash.com/photo-1509030450996-939974e167c8?auto=format&fit=crop&w=800&q=80', status: 'Caution Advised', metrics: getMetrics('urban'), localSignals: ["Old quarter motorbike traffic extreme"], tags: ['History', 'StreetFood'], description: 'Known for its centuries-old architecture and a rich culture with Southeast Asian influences.', baseCostPerDay: 45, communityFeedback: getFeedback('Hanoi') },
   { id: 'boracay-ph', name: 'Boracay', country: 'Philippines', image: 'https://images.unsplash.com/photo-1552733407-5d5c46c3bb3b?auto=format&fit=crop&w=800&q=80', status: 'Recommended', metrics: getMetrics('nature'), localSignals: ["Beach visitor quota strictly enforced"], tags: ['Beach', 'Paradise'], description: 'A tiny island in the central Philippines known for its resorts and beaches.', baseCostPerDay: 110, communityFeedback: getFeedback('Boracay') },
   { id: 'angkorwat-kh', name: 'Angkor Wat', country: 'Cambodia', image: 'https://images.unsplash.com/photo-1600120848574-375225dbd3c5?auto=format&fit=crop&w=800&q=80', status: 'Recommended', metrics: getMetrics('nature'), localSignals: ["Sunrise temple congestion"], tags: ['Archaeology', 'History'], description: 'The largest religious monument in the world by land area.', baseCostPerDay: 55, communityFeedback: getFeedback('Angkor Wat') },
-  { id: 'kualalumpur-my', name: 'Kuala Lumpur', country: 'Malaysia', image: 'https://images.unsplash.com/photo-1541769493541-399c261fbd5b?auto=format&fit=crop&w=800&q=80', status: 'Recommended', metrics: getMetrics('urban'), localSignals: ["Batu Caves morning crowds"], tags: ['Modern', 'Mix'], description: 'Known for its 451m-tall Petronas Twin Towers and its colonial architecture.', baseCostPerDay: 75, communityFeedback: getFeedback('Kuala Lumpur') },
+  { id: 'kualalumpur-my', name: 'Kuala Lumpur', country: 'Malaysia', image: 'https://images.unsplash.com/photo-1541769493541-399c261fbd5b?auto=format&fit=crop&w=800&q=80', status: 'Recommended', metrics: getMetrics('urban'), localSignals: ["Batu Caves morning crowds"], tags: ['Modern', 'Mix'], description: 'Known for its 451m-tall Petronas Twin Towers and its colonial architecture.', baseCostPerDay: 75, communityFeedback: getFeedback('Kualalumpur') },
   { id: 'halongbay-vn', name: 'Halong Bay', country: 'Vietnam', image: 'https://images.unsplash.com/photo-1552074230-74311005230c?auto=format&fit=crop&w=800&q=80', status: 'Recommended', metrics: getMetrics('nature'), localSignals: ["Cave visit slots filling fast"], tags: ['Karst', 'Cruise'], description: 'Featuring thousands of limestone karsts and isles in various shapes and sizes.', baseCostPerDay: 120, communityFeedback: getFeedback('Halong Bay') },
   { id: 'luangprabang-la', name: 'Luang Prabang', country: 'Laos', image: 'https://images.unsplash.com/photo-1540611025311-01df3cef54b5?auto=format&fit=crop&w=800&q=80', status: 'Recommended', metrics: getMetrics('nature'), localSignals: ["Alms giving ceremony advisory"], tags: ['River', 'Heritage'], description: 'A former royal capital, famous for its many Buddhist temples.', baseCostPerDay: 40, communityFeedback: getFeedback('Luang Prabang') },
   { id: 'siemreap-kh', name: 'Siem Reap', country: 'Cambodia', image: 'https://images.unsplash.com/photo-1528127269322-539801943592?auto=format&fit=crop&w=800&q=80', status: 'Recommended', metrics: getMetrics('urban'), localSignals: ["Night market high traffic"], tags: ['Base', 'Culture'], description: 'The gateway to the ruins of Angkor, the seat of the Khmer kingdom.', baseCostPerDay: 45, communityFeedback: getFeedback('Siem Reap') },
 ];
 
-// Ensure every destination has a guide mapping - using the previously defined helper
 MOCK_DESTINATIONS.forEach(dest => {
   if (!MOCK_GUIDES[dest.id]) {
     MOCK_GUIDES[dest.id] = generateGuides(dest.name, dest.country);

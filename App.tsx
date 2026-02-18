@@ -16,25 +16,44 @@ import Premium from './views/Premium';
 import Settings from './views/Settings';
 import Onboarding from './views/Onboarding';
 import { User } from './types';
+import { apiService } from './services/apiService';
 
 const App: React.FC = () => {
-  const [user, setUser] = useState<User | null>(() => {
-    const saved = localStorage.getItem('ecobalance-user');
-    return saved ? JSON.parse(saved) : null;
-  });
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  const handleOnboarding = (userData: { name: string; email: string; passwordHash: string }) => {
+  useEffect(() => {
+    // Initial Session Check
+    const saved = localStorage.getItem('ecobalance-user');
+    if (saved) {
+      setUser(JSON.parse(saved));
+    }
+    setLoading(false);
+  }, []);
+
+  const handleOnboarding = async (userData: { name: string; email: string; passwordHash: string }) => {
     const newUser: User = {
       ...userData,
       isPremium: false,
       joinedDate: new Date().toISOString()
     };
-    localStorage.setItem('ecobalance-user', JSON.stringify(newUser));
-    setUser(newUser);
+    const savedUser = await apiService.signup(newUser);
+    setUser(savedUser);
   };
 
+  const handleLogin = async (email: string, passwordHash: string) => {
+    const loggedInUser = await apiService.login(email, passwordHash);
+    if (loggedInUser) {
+      setUser(loggedInUser);
+      return true;
+    }
+    return false;
+  };
+
+  if (loading) return null;
+
   if (!user) {
-    return <Onboarding onComplete={handleOnboarding} />;
+    return <Onboarding onComplete={handleOnboarding} onLogin={handleLogin} />;
   }
 
   return (

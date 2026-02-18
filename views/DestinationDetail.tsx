@@ -1,46 +1,72 @@
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { MOCK_DESTINATIONS } from '../constants';
+import { apiService } from '../services/apiService';
 import ScoreBadge from '../components/ScoreBadge';
 import { getDestinationAIOverview } from '../services/geminiService';
-import { Wind, Droplets, Users, Building2, ShieldCheck, Sparkles, Loader2, Megaphone, MessageSquare, Star, UsersRound, MessageCircleWarning, Map, Lock, Crown, AlertTriangle, ArrowLeft, Volume2, TreePine, Info } from 'lucide-react';
+import { Wind, Droplets, Users, Building2, ShieldCheck, Sparkles, Loader2, Megaphone, MessageSquare, Star, UsersRound, MessageCircleWarning, Map, Lock, Crown, AlertTriangle, ArrowLeft, Volume2, TreePine, Info, Activity } from 'lucide-react';
+import { Destination } from '../types';
 
 const DestinationDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const [destination, setDestination] = useState<Destination | undefined>();
   const [aiData, setAiData] = useState<any>(null);
-  const [loading, setLoading] = useState(false);
+  const [loadingAI, setLoadingAI] = useState(false);
   const [isPremium, setIsPremium] = useState(() => localStorage.getItem('starling-premium') === 'true');
 
-  const destination = MOCK_DESTINATIONS.find(d => d.id === id);
-  if (!destination) return <div className="p-4 text-center py-20">Destination not found</div>;
-
-  const alternatives = MOCK_DESTINATIONS
-    .filter(d => d.id !== id && d.status === 'Recommended')
-    .slice(0, 2);
-
-  useEffect(() => {
-    const fetchAI = async () => {
-      setLoading(true);
-      const res = await getDestinationAIOverview(destination, alternatives);
-      setAiData(res);
-      setLoading(false);
-    };
-    fetchAI();
-    window.scrollTo(0,0);
+  const fetchDestinationData = useCallback(async () => {
+    if (!id) return;
+    const data = await apiService.getDestinationById(id);
+    if (data) {
+      setDestination({...data});
+    }
   }, [id]);
 
   useEffect(() => {
+    fetchDestinationData();
+    window.scrollTo(0,0);
+
+    let interval: any;
+    if (id === 'demo-place-live') {
+      interval = setInterval(fetchDestinationData, 5000); // Pulse every 5 seconds
+    }
+
     const handleStorage = () => setIsPremium(localStorage.getItem('starling-premium') === 'true');
     window.addEventListener('storage', handleStorage);
-    return () => window.removeEventListener('storage', handleStorage);
-  }, []);
+    
+    return () => {
+      if (interval) clearInterval(interval);
+      window.removeEventListener('storage', handleStorage);
+    };
+  }, [id, fetchDestinationData]);
+
+  useEffect(() => {
+    if (destination && !aiData) {
+      const alternatives = MOCK_DESTINATIONS
+        .filter(d => d.id !== id && d.status === 'Recommended')
+        .slice(0, 2);
+        
+      const fetchAI = async () => {
+        setLoadingAI(true);
+        const res = await getDestinationAIOverview(destination, alternatives);
+        setAiData(res);
+        setLoadingAI(false);
+      };
+      fetchAI();
+    }
+  }, [destination, aiData, id]);
 
   const handleImageError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
     const target = e.target as HTMLImageElement;
     target.src = "https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&w=800&q=80";
   };
+
+  if (!destination) return <div className="p-20 text-center flex flex-col items-center gap-4">
+    <Loader2 className="animate-spin text-emerald-500" size={40} />
+    <p className="text-slate-400 font-bold uppercase text-xs">Calibrating Sensors...</p>
+  </div>;
 
   return (
     <div className="animate-in fade-in duration-500 pb-20">
@@ -59,7 +85,12 @@ const DestinationDetail = () => {
         </div>
         <div className="absolute bottom-6 left-6 right-6 flex justify-between items-end">
           <div>
-            <h1 className="text-3xl font-bold text-white mb-1 shadow-sm">{destination.name}</h1>
+            <div className="flex items-center gap-2 mb-1">
+              <h1 className="text-3xl font-bold text-white shadow-sm">{destination.name}</h1>
+              {id === 'demo-place-live' && (
+                <div className="bg-rose-500 text-white px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest animate-pulse">Live</div>
+              )}
+            </div>
             <p className="text-white/80">{destination.country}</p>
           </div>
           <ScoreBadge status={destination.status} size="lg" />
@@ -68,6 +99,17 @@ const DestinationDetail = () => {
 
       <div className="p-6 space-y-8">
         
+        {/* Live Sync Status */}
+        {id === 'demo-place-live' && (
+          <div className="bg-slate-900 text-slate-100 p-3 rounded-xl flex items-center justify-between text-[10px] font-bold uppercase tracking-widest border border-slate-800">
+            <div className="flex items-center gap-2">
+              <Activity size={14} className="text-emerald-500" />
+              Real-time Pulse Feed Active
+            </div>
+            <div className="opacity-50 font-mono">Sync: 5s</div>
+          </div>
+        )}
+
         {/* Premium Risk Alert */}
         {destination.isRiskDropping && (
           <div className="relative overflow-hidden bg-rose-50 dark:bg-rose-900/20 border border-rose-100 dark:border-rose-800 rounded-2xl p-5">
@@ -148,7 +190,7 @@ const DestinationDetail = () => {
               <span>EcoBalance AI Analysis</span>
             </div>
             
-            {loading ? (
+            {loadingAI ? (
               <div className="flex items-center gap-3 py-4 text-indigo-600 dark:text-indigo-400">
                 <Loader2 size={24} className="animate-spin" />
                 <span className="font-medium">Synthesizing raw sensor data...</span>
@@ -162,7 +204,7 @@ const DestinationDetail = () => {
                    <div className="bg-emerald-50 dark:bg-emerald-900/20 p-4 rounded-xl text-sm text-emerald-800 dark:text-emerald-300 border border-emerald-100 dark:border-emerald-800 flex items-start gap-3">
                     <ShieldCheck size={18} className="shrink-0 mt-0.5" />
                     <div>
-                      <span className="font-bold">Premium Logic:</span> Safety classification is <span className="underline">{destination.status}</span>. Analysis of raw AQI and PPM levels suggests minimal exposure risks for off-peak visiting.
+                      <span className="font-bold">Premium Logic:</span> Safety classification is <span className="underline">{destination.status}</span>. Analysis suggests minimal exposure risks for off-peak visiting based on live trends.
                     </div>
                   </div>
                 )}

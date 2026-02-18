@@ -2,16 +2,14 @@
 import React from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { ArrowLeft, CreditCard, Bell, Shield, Moon, ChevronRight, LogOut, Info } from 'lucide-react';
+import { apiService } from '../services/apiService';
 
 const Settings = () => {
   const navigate = useNavigate();
 
-  const handleLogout = () => {
-    localStorage.removeItem('ecobalance-user');
-    localStorage.removeItem('starling-premium');
-    localStorage.removeItem('starling-premium-expiry');
-    localStorage.removeItem('starling-premium-status');
-    window.location.reload(); // Hard reload to trigger onboarding
+  const handleLogout = async () => {
+    await apiService.logout();
+    window.location.reload(); // Hard reload to trigger onboarding state
   };
 
   const menuItems = [

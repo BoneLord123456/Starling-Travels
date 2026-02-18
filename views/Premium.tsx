@@ -1,7 +1,8 @@
 
 import React, { useState, useEffect } from 'react';
-import { Crown, Check, Zap, Sparkles, ShieldCheck, Map, ArrowLeft, Star, Loader2, AlertCircle, X, CheckCircle2, History } from 'lucide-react';
+import { Crown, Zap, Sparkles, ShieldCheck, Map, ArrowLeft, Star, Loader2, AlertCircle, X, CheckCircle2, History } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { apiService } from '../services/apiService';
 
 const Premium = () => {
   const navigate = useNavigate();
@@ -25,47 +26,47 @@ const Premium = () => {
     return () => window.removeEventListener('storage', handleStorage);
   }, []);
 
-  const handleUpgrade = () => {
+  const handleUpgrade = async () => {
     setIsUpgrading(true);
-    setTimeout(() => {
-      const nextMonth = new Date();
-      nextMonth.setDate(nextMonth.getDate() + 30);
-      const expiryStr = nextMonth.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
-      
-      localStorage.setItem('starling-premium', 'true');
-      localStorage.setItem('starling-premium-expiry', expiryStr);
-      localStorage.setItem('starling-premium-status', 'active');
-      
-      setIsPremium(true);
-      setExpiryDate(expiryStr);
-      setStatus('active');
-      setIsUpgrading(false);
-      window.dispatchEvent(new Event('storage'));
-    }, 1500);
+    // Real API call simulation
+    await new Promise(r => setTimeout(r, 2000));
+    
+    const nextMonth = new Date();
+    nextMonth.setDate(nextMonth.getDate() + 30);
+    const expiryStr = nextMonth.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+    
+    await apiService.updatePremiumStatus(true);
+    localStorage.setItem('starling-premium-expiry', expiryStr);
+    localStorage.setItem('starling-premium-status', 'active');
+    
+    setIsPremium(true);
+    setExpiryDate(expiryStr);
+    setStatus('active');
+    setIsUpgrading(false);
+    window.dispatchEvent(new Event('storage'));
   };
 
-  const handleConfirmCancel = () => {
+  const handleConfirmCancel = async () => {
     setIsCancelling(true);
-    setTimeout(() => {
-      // Logic: Premium stays active but status changes to cancelled
-      localStorage.setItem('starling-premium-status', 'cancelled');
-      setStatus('cancelled');
-      setIsCancelling(false);
-      setShowCancelConfirm(false);
-      setJustCancelled(true);
-      window.dispatchEvent(new Event('storage'));
-    }, 1200);
+    await new Promise(r => setTimeout(r, 1200));
+    
+    localStorage.setItem('starling-premium-status', 'cancelled');
+    setStatus('cancelled');
+    setIsCancelling(false);
+    setShowCancelConfirm(false);
+    setJustCancelled(true);
+    window.dispatchEvent(new Event('storage'));
   };
 
-  const handleRestartSubscription = () => {
+  const handleRestartSubscription = async () => {
     localStorage.setItem('starling-premium-status', 'active');
     setStatus('active');
     setJustCancelled(false);
     window.dispatchEvent(new Event('storage'));
   };
 
-  const resetAllForDemo = () => {
-    localStorage.removeItem('starling-premium');
+  const resetAllForDemo = async () => {
+    await apiService.updatePremiumStatus(false);
     localStorage.removeItem('starling-premium-expiry');
     localStorage.removeItem('starling-premium-status');
     setIsPremium(false);

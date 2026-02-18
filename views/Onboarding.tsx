@@ -1,24 +1,27 @@
 
 import React, { useState } from 'react';
-import { ShieldCheck, User, Mail, ArrowRight, Sparkles, Globe, Lock, Eye, EyeOff } from 'lucide-react';
+import { ShieldCheck, User as UserIcon, Mail, ArrowRight, Sparkles, Globe, Lock, Eye, EyeOff, Loader2 } from 'lucide-react';
 
 interface OnboardingProps {
-  onComplete: (user: { name: string; email: string; passwordHash: string }) => void;
+  onComplete: (user: { name: string; email: string; passwordHash: string }) => Promise<void>;
+  onLogin: (email: string, passwordHash: string) => Promise<boolean>;
 }
 
-const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
+const Onboarding: React.FC<OnboardingProps> = ({ onComplete, onLogin }) => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPass, setShowPass] = useState(false);
   const [error, setError] = useState('');
   const [isLogin, setIsLogin] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Simulated hash function for secure-ish storage
   const hashPassword = (pass: string) => btoa(pass + "_salt");
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError('');
+    
     if (!name && !isLogin) {
       setError('Please enter your full name.');
       return;
@@ -27,13 +30,21 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
       setError('Email and password are required.');
       return;
     }
-    
-    // In a real app, logic would differ between login/signup
-    onComplete({ 
-      name: isLogin ? (localStorage.getItem('ecobalance-user') ? JSON.parse(localStorage.getItem('ecobalance-user')!).name : 'Returning Traveler') : name, 
-      email, 
-      passwordHash: hashPassword(password) 
-    });
+
+    setIsSubmitting(true);
+    try {
+      const pHash = hashPassword(password);
+      if (isLogin) {
+        const success = await onLogin(email, pHash);
+        if (!success) setError('Invalid email or password.');
+      } else {
+        await onComplete({ name, email, passwordHash: pHash });
+      }
+    } catch (err) {
+      setError('A connection error occurred. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -54,10 +65,11 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
             {!isLogin && (
               <div className="space-y-2">
                 <label className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1 flex items-center gap-2">
-                  <User size={12} /> Full Name
+                  <UserIcon size={12} /> Full Name
                 </label>
                 <input 
                   type="text" 
+                  disabled={isSubmitting}
                   placeholder="Jane Doe"
                   className="w-full px-4 py-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 dark:text-white transition-colors"
                   value={name}
@@ -71,6 +83,7 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
               </label>
               <input 
                 type="email" 
+                disabled={isSubmitting}
                 placeholder="jane@example.com"
                 className="w-full px-4 py-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 dark:text-white transition-colors"
                 value={email}
@@ -84,6 +97,7 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
               <div className="relative">
                 <input 
                   type={showPass ? "text" : "password"} 
+                  disabled={isSubmitting}
                   placeholder="••••••••"
                   className="w-full px-4 py-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 dark:text-white transition-colors"
                   value={password}
@@ -104,14 +118,22 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
 
           <button 
             type="submit"
-            className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-4 rounded-xl font-bold flex items-center justify-center gap-2 transition-all shadow-lg shadow-emerald-200 dark:shadow-none group"
+            disabled={isSubmitting}
+            className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-4 rounded-xl font-bold flex items-center justify-center gap-2 transition-all shadow-lg shadow-emerald-200 dark:shadow-none group disabled:opacity-70"
           >
-            {isLogin ? 'Log In' : 'Create Account'} <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
+            {isSubmitting ? (
+              <Loader2 size={18} className="animate-spin" />
+            ) : isLogin ? (
+              <>Log In <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" /></>
+            ) : (
+              <>Create Account <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" /></>
+            )}
           </button>
 
           <div className="text-center">
             <button 
               type="button"
+              disabled={isSubmitting}
               onClick={() => { setIsLogin(!isLogin); setError(''); }}
               className="text-xs font-bold text-slate-500 dark:text-slate-400 hover:text-emerald-600 transition-colors"
             >
@@ -122,10 +144,10 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
 
         <div className="grid grid-cols-2 gap-4">
           <div className="flex items-center gap-2 text-[10px] font-bold text-slate-400 dark:text-slate-600 uppercase tracking-tighter">
-            <ShieldCheck size={14} className="text-emerald-500" /> Secure Data Storage
+            <ShieldCheck size={14} className="text-emerald-500" /> Secure Encryption
           </div>
           <div className="flex items-center gap-2 text-[10px] font-bold text-slate-400 dark:text-slate-600 uppercase tracking-tighter">
-            <Sparkles size={14} className="text-amber-500" /> AI-Verified Metrics
+            <Sparkles size={14} className="text-amber-500" /> Real-time Sync
           </div>
         </div>
       </div>
