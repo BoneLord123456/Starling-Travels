@@ -8,62 +8,58 @@ import { getDestinationAIOverview } from '../services/geminiService';
 import { Wind, Droplets, Users, ShieldCheck, Sparkles, Loader2, Megaphone, MessageSquare, Star, UsersRound, MessageCircleWarning, Map, Lock, Crown, ArrowLeft, Volume2, Activity, Zap, Send, Thermometer } from 'lucide-react';
 import { Destination, CommunityComment } from '../types';
 
-const EcoStressGauge = ({ value }: { value: number }) => {
+const EcoStressGauge = ({ value, className }: { value: number; className?: string }) => {
   const rotation = (value / 100) * 180 - 90; // Arc is 180 degrees, from -90 to +90
   
   return (
-    <div className="flex flex-col items-center justify-center p-4 bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl rounded-3xl border border-white/20 dark:border-slate-800/50 shadow-2xl relative w-64 mx-auto z-40">
-      <div className="absolute top-2 left-1/2 -translate-x-1/2 text-[9px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-[0.2em] flex items-center gap-1.5 whitespace-nowrap">
-        <Activity size={12} className="text-emerald-500" />
-        Live Eco Stress
+    <div className={`flex flex-col items-center justify-center p-3 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xl z-40 ${className}`}>
+      <div className="text-[9px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest flex items-center gap-1 mb-2">
+        <Activity size={10} className="text-emerald-500" />
+        Eco Stress
       </div>
       
-      <div className="relative w-40 h-24 mt-6 overflow-hidden">
-        {/* Arc Track with Gradient */}
+      <div className="relative w-32 h-16 overflow-hidden">
+        {/* Vibrant Gradient Arc */}
         <svg viewBox="0 0 100 55" className="w-full h-full">
           <defs>
-            <linearGradient id="gaugeGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-              <stop offset="0%" stopColor="#10b981" />   {/* Emerald */}
-              <stop offset="50%" stopColor="#f59e0b" />  {/* Amber */}
-              <stop offset="100%" stopColor="#ef4444" /> {/* Rose */}
+            <linearGradient id="vibrantGaugeGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stopColor="#22c55e" />   {/* Vibrant Green */}
+              <stop offset="50%" stopColor="#eab308" />  {/* Vibrant Yellow */}
+              <stop offset="100%" stopColor="#ef4444" /> {/* Vibrant Red */}
             </linearGradient>
           </defs>
           <path 
             d="M 10 50 A 40 40 0 0 1 90 50" 
             fill="none" 
-            stroke="#e2e8f0" 
-            strokeWidth="10" 
+            stroke="#f1f5f9" 
+            strokeWidth="12" 
             className="dark:stroke-slate-800"
             strokeLinecap="round"
           />
           <path 
             d="M 10 50 A 40 40 0 0 1 90 50" 
             fill="none" 
-            stroke="url(#gaugeGradient)" 
-            strokeWidth="10" 
+            stroke="url(#vibrantGaugeGradient)" 
+            strokeWidth="12" 
             strokeLinecap="round"
-            strokeDasharray="125.6"
-            strokeDashoffset="0"
-            opacity="0.9"
+            opacity="1"
           />
         </svg>
 
         {/* Needle */}
         <div 
-          className="absolute bottom-0 left-1/2 w-1 h-16 -ml-0.5 bg-slate-900 dark:bg-white rounded-full origin-bottom transition-transform duration-1000 cubic-bezier(0.34, 1.56, 0.64, 1)"
+          className="absolute bottom-0 left-1/2 w-1 h-12 -ml-0.5 bg-slate-900 dark:bg-white rounded-full origin-bottom transition-transform duration-1000 cubic-bezier(0.34, 1.56, 0.64, 1)"
           style={{ transform: `rotate(${rotation}deg)` }}
         >
-          <div className="absolute -top-1.5 -left-1.5 w-4 h-4 bg-slate-900 dark:bg-white rounded-full shadow-lg flex items-center justify-center">
-             <div className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse" />
-          </div>
+          <div className="absolute -top-1 -left-1 w-3 h-3 bg-slate-900 dark:bg-white rounded-full shadow-lg" />
         </div>
       </div>
 
-      <div className="text-center -mt-2 pb-2">
-        <div className="text-3xl font-black text-slate-900 dark:text-white tabular-nums">
+      <div className="text-center mt-1">
+        <div className="text-xl font-black text-slate-900 dark:text-white tabular-nums leading-none">
           {value.toFixed(1)}
         </div>
-        <div className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Index Units</div>
+        <div className="text-[7px] font-black text-slate-400 uppercase tracking-tighter">Stress Index</div>
       </div>
     </div>
   );
@@ -175,7 +171,7 @@ const DestinationDetail = () => {
             <ArrowLeft size={20} />
           </button>
         </div>
-        <div className="absolute bottom-12 left-6 right-6 flex justify-between items-end">
+        <div className="absolute bottom-6 left-6 right-6 flex justify-between items-end">
           <div className="max-w-[60%]">
             <div className="flex items-center gap-2 mb-1">
               <h1 className="text-3xl font-black text-white drop-shadow-lg tracking-tight leading-none">{destination.name}</h1>
@@ -187,55 +183,61 @@ const DestinationDetail = () => {
           </div>
           <ScoreBadge status={destination.status} size="lg" />
         </div>
-        
-        {/* Speedy-Gauge straddling the boundary */}
-        <div className="absolute left-1/2 -bottom-16 -translate-x-1/2">
-           <EcoStressGauge value={destination.metrics.ecoStress || 15} />
-        </div>
       </div>
 
-      <div className="p-6 pt-20 space-y-8">
-        {/* Action Bar */}
-        <section className="space-y-4">
-          <Link 
-            to={`/plan/${destination.id}`}
-            className="w-full flex items-center justify-center gap-2 p-4 bg-slate-900 dark:bg-slate-800 text-white rounded-2xl font-bold hover:bg-black transition-colors shadow-2xl"
-          >
-            <Map size={20} />
-            Optimize My Safest Trip Plan
-          </Link>
-          <div className="grid grid-cols-2 gap-4">
+      <div className="p-6 space-y-8">
+        
+        {/* REPOSITIONED ACTION CLUSTER */}
+        <section className="flex flex-col md:flex-row gap-4 items-stretch">
+          
+          {/* Left Section: Vibrant Gauge */}
+          <div className="md:w-1/3 flex items-center justify-center">
+             <EcoStressGauge value={destination.metrics.ecoStress || 15} className="w-full h-full" />
+          </div>
+          
+          {/* Right Section: Multi-tiered Action Buttons */}
+          <div className="flex-1 flex flex-col gap-3">
             <Link 
-              to={`/guides/${destination.id}`}
-              className="flex items-center justify-center gap-2 p-4 bg-indigo-600 text-white rounded-2xl font-bold hover:bg-indigo-700 transition-colors shadow-lg"
+              to={`/plan/${destination.id}`}
+              className="w-full flex items-center justify-center gap-2 p-5 bg-white dark:bg-slate-900 text-slate-900 dark:text-white border border-slate-200 dark:border-slate-800 rounded-2xl font-black text-xs uppercase tracking-[0.15em] hover:bg-slate-50 transition-all shadow-xl shadow-slate-200/50 dark:shadow-none"
             >
-              <UsersRound size={20} />
-              Hire Guide
+              <Map size={18} />
+              Optimize My Safest Trip Plan
             </Link>
-            <Link 
-              to={`/ai-chat/${destination.id}`}
-              className={`flex items-center justify-center gap-2 p-4 rounded-2xl font-bold transition-all shadow-lg ${
-                isPremium 
-                  ? 'bg-rose-500 text-white hover:bg-rose-600' 
-                  : 'bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800 hover:bg-amber-200'
-              }`}
-            >
-              {isPremium ? <MessageCircleWarning size={20} /> : <Lock size={20} />}
-              {isPremium ? 'Honest AI' : 'Truth Mode'}
-            </Link>
+            
+            <div className="grid grid-cols-2 gap-3 flex-1">
+              <Link 
+                to={`/guides/${destination.id}`}
+                className="flex items-center justify-center gap-2 p-5 bg-[#2563eb] text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-blue-700 transition-colors shadow-lg"
+              >
+                <UsersRound size={16} />
+                Hire Guide
+              </Link>
+              <Link 
+                to={`/ai-chat/${destination.id}`}
+                className={`flex items-center justify-center gap-2 p-5 rounded-2xl font-black text-xs uppercase tracking-widest transition-all shadow-lg ${
+                  isPremium 
+                    ? 'bg-[#5c4033] text-white hover:bg-[#4a332a]' // Truth Mode Brown
+                    : 'bg-amber-100 text-amber-800 border border-amber-200'
+                }`}
+              >
+                {isPremium ? <MessageCircleWarning size={16} /> : <Lock size={16} />}
+                Truth Mode
+              </Link>
+            </div>
           </div>
         </section>
 
         {/* Local Signals */}
         {destination.localSignals.length > 0 && (
           <section className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-2xl p-5 space-y-3 shadow-sm">
-            <div className="flex items-center gap-2 text-amber-700 dark:text-amber-400 font-bold text-sm uppercase tracking-wider">
-              <Megaphone size={18} />
+            <div className="flex items-center gap-2 text-amber-700 dark:text-amber-400 font-bold text-[10px] uppercase tracking-widest">
+              <Megaphone size={16} />
               <span>Real-time Local Signals</span>
             </div>
             <div className="space-y-2">
               {destination.localSignals.map((signal, idx) => (
-                <div key={idx} className="flex gap-2 text-amber-900 dark:text-amber-100 text-sm bg-white/50 dark:bg-white/5 p-2 rounded-lg border border-amber-100 dark:border-amber-900/50">
+                <div key={idx} className="flex gap-2 text-amber-900 dark:text-amber-100 text-xs bg-white/50 dark:bg-white/5 p-2 rounded-lg border border-amber-100 dark:border-amber-900/50">
                   <div className="w-1.5 h-1.5 bg-amber-500 rounded-full mt-1.5 shrink-0" />
                   {signal}
                 </div>
