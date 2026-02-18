@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Search, ArrowRight, Wind, Users, SortAsc, Filter, Crown, Sparkles, Volume2, Loader2, Activity } from 'lucide-react';
+import { Search, ArrowRight, Wind, Users, SortAsc, Filter, Crown, Sparkles, Volume2, Loader2, Activity, Zap } from 'lucide-react';
 import { apiService } from '../services/apiService';
 import ScoreBadge from '../components/ScoreBadge';
 import { Link } from 'react-router-dom';
@@ -23,13 +23,9 @@ const Discover = () => {
 
   useEffect(() => {
     fetchData(true);
-
-    // 5-second polling for real-time feeling
     const pollInterval = setInterval(() => fetchData(false), 5000);
-
     const handleStorage = () => setIsPremium(localStorage.getItem('starling-premium') === 'true');
     window.addEventListener('storage', handleStorage);
-    
     return () => {
       clearInterval(pollInterval);
       window.removeEventListener('storage', handleStorage);
@@ -158,16 +154,20 @@ const Discover = () => {
                         <span className="text-[9px] text-slate-400 dark:text-slate-500 font-black mt-1 uppercase tracking-tighter">{Math.round(dest.metrics.airQualityAQI)} AQI</span>
                       </div>
                       <div className="flex flex-col items-center">
-                        <Users size={16} className={dest.metrics.crowdDensity < 1 ? 'text-emerald-500' : 'text-rose-500'} />
-                        <span className="text-[9px] text-slate-400 dark:text-slate-500 font-black mt-1 uppercase tracking-tighter">{dest.metrics.crowdDensity.toFixed(1)}/m²</span>
+                        <Zap size={16} className={isLive ? (dest.metrics.soilPPM <= 30 ? 'text-emerald-500' : dest.metrics.soilPPM <= 60 ? 'text-amber-500' : 'text-rose-500') : (dest.metrics.soilPPM < 50 ? 'text-emerald-500' : 'text-rose-500')} />
+                        <span className="text-[9px] text-slate-400 dark:text-slate-500 font-black mt-1 uppercase tracking-tighter">
+                          {dest.metrics.soilPPM.toFixed(1)}{isLive ? ' Stress' : ' PPM'}
+                        </span>
                       </div>
                       <div className="flex flex-col items-center">
-                        <Volume2 size={16} className={dest.metrics.noiseDB < 50 ? 'text-emerald-500' : 'text-rose-500'} />
-                        <span className="text-[9px] text-slate-400 dark:text-slate-500 font-black mt-1 uppercase tracking-tighter">{Math.round(dest.metrics.noiseDB)} dB</span>
+                        <Volume2 size={16} className={isLive ? (dest.metrics.noiseDB <= 30 ? 'text-emerald-500' : dest.metrics.noiseDB <= 60 ? 'text-amber-500' : 'text-rose-500') : (dest.metrics.noiseDB < 50 ? 'text-emerald-500' : 'text-rose-500')} />
+                        <span className="text-[9px] text-slate-400 dark:text-slate-500 font-black mt-1 uppercase tracking-tighter">
+                          {dest.metrics.noiseDB.toFixed(1)}{isLive ? ' Stress' : ' dB'}
+                        </span>
                       </div>
                     </div>
                     <div className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-black text-xs uppercase tracking-widest group-hover:gap-2 transition-all">
-                      Detail <ArrowRight size={14} />
+                      Analysis <ArrowRight size={14} />
                     </div>
                   </div>
                 </div>

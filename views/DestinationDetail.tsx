@@ -5,8 +5,8 @@ import { MOCK_DESTINATIONS } from '../constants';
 import { apiService } from '../services/apiService';
 import ScoreBadge from '../components/ScoreBadge';
 import { getDestinationAIOverview } from '../services/geminiService';
-import { Wind, Droplets, Users, Building2, ShieldCheck, Sparkles, Loader2, Megaphone, MessageSquare, Star, UsersRound, MessageCircleWarning, Map, Lock, Crown, AlertTriangle, ArrowLeft, Volume2, TreePine, Info, Activity } from 'lucide-react';
-import { Destination } from '../types';
+import { Wind, Droplets, Users, Building2, ShieldCheck, Sparkles, Loader2, Megaphone, MessageSquare, Star, UsersRound, MessageCircleWarning, Map, Lock, Crown, AlertTriangle, ArrowLeft, Volume2, TreePine, Info, Activity, Zap, Send } from 'lucide-react';
+import { Destination, CommunityComment } from '../types';
 
 const DestinationDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -15,6 +15,13 @@ const DestinationDetail = () => {
   const [aiData, setAiData] = useState<any>(null);
   const [loadingAI, setLoadingAI] = useState(false);
   const [isPremium, setIsPremium] = useState(() => localStorage.getItem('starling-premium') === 'true');
+  
+  // Review form state
+  const [reviewText, setReviewText] = useState('');
+  const [reviewRating, setReviewRating] = useState(5);
+  const [submittingReview, setSubmittingReview] = useState(false);
+
+  const isLive = id === 'demo-place-live';
 
   const fetchDestinationData = useCallback(async () => {
     if (!id) return;
@@ -29,8 +36,8 @@ const DestinationDetail = () => {
     window.scrollTo(0,0);
 
     let interval: any;
-    if (id === 'demo-place-live') {
-      interval = setInterval(fetchDestinationData, 5000); // Pulse every 5 seconds
+    if (isLive) {
+      interval = setInterval(fetchDestinationData, 5000); 
     }
 
     const handleStorage = () => setIsPremium(localStorage.getItem('starling-premium') === 'true');
@@ -40,7 +47,7 @@ const DestinationDetail = () => {
       if (interval) clearInterval(interval);
       window.removeEventListener('storage', handleStorage);
     };
-  }, [id, fetchDestinationData]);
+  }, [id, fetchDestinationData, isLive]);
 
   useEffect(() => {
     if (destination && !aiData) {
@@ -61,6 +68,32 @@ const DestinationDetail = () => {
   const handleImageError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
     const target = e.target as HTMLImageElement;
     target.src = "https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&w=800&q=80";
+  };
+
+  const handleAddReview = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!reviewText.trim() || !destination) return;
+    
+    setSubmittingReview(true);
+    // Simulate API delay
+    await new Promise(r => setTimeout(r, 800));
+    
+    const newComment: CommunityComment = {
+      id: Date.now().toString(),
+      user: 'You',
+      comment: reviewText,
+      date: new Date().toISOString().split('T')[0],
+      rating: reviewRating
+    };
+    
+    setDestination({
+      ...destination,
+      communityFeedback: [newComment, ...destination.communityFeedback]
+    });
+    
+    setReviewText('');
+    setReviewRating(5);
+    setSubmittingReview(false);
   };
 
   if (!destination) return <div className="p-20 text-center flex flex-col items-center gap-4">
@@ -87,8 +120,8 @@ const DestinationDetail = () => {
           <div>
             <div className="flex items-center gap-2 mb-1">
               <h1 className="text-3xl font-bold text-white shadow-sm">{destination.name}</h1>
-              {id === 'demo-place-live' && (
-                <div className="bg-rose-500 text-white px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest animate-pulse">Live</div>
+              {isLive && (
+                <div className="bg-rose-500 text-white px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest animate-pulse">Live Stress Feed</div>
               )}
             </div>
             <p className="text-white/80">{destination.country}</p>
@@ -100,37 +133,17 @@ const DestinationDetail = () => {
       <div className="p-6 space-y-8">
         
         {/* Live Sync Status */}
-        {id === 'demo-place-live' && (
+        {isLive && (
           <div className="bg-slate-900 text-slate-100 p-3 rounded-xl flex items-center justify-between text-[10px] font-bold uppercase tracking-widest border border-slate-800">
             <div className="flex items-center gap-2">
               <Activity size={14} className="text-emerald-500" />
-              Real-time Pulse Feed Active
+              Real-time Stress Telemetry Active
             </div>
             <div className="opacity-50 font-mono">Sync: 5s</div>
           </div>
         )}
 
-        {/* Premium Risk Alert */}
-        {destination.isRiskDropping && (
-          <div className="relative overflow-hidden bg-rose-50 dark:bg-rose-900/20 border border-rose-100 dark:border-rose-800 rounded-2xl p-5">
-            {!isPremium && <div className="absolute inset-0 bg-white/40 dark:bg-black/40 backdrop-blur-[2px] z-10 flex items-center justify-center">
-              <Link to="/premium" className="bg-indigo-600 text-white px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 shadow-lg">
-                <Crown size={14} /> Unlock Premium Early Warning
-              </Link>
-            </div>}
-            <div className="flex items-start gap-4">
-              <div className="p-3 bg-rose-100 dark:bg-rose-800 rounded-xl text-rose-600 dark:text-rose-300">
-                <AlertTriangle size={24} />
-              </div>
-              <div>
-                <h4 className="font-bold text-rose-700 dark:text-rose-400">Environmental Volatility</h4>
-                <p className="text-xs text-rose-600 dark:text-rose-500 font-medium">Sensor trends indicate a likely deterioration in metrics forecasted for next month.</p>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Main Action Bar */}
+        {/* Action Bar */}
         <section className="space-y-4">
           <Link 
             to={`/plan/${destination.id}`}
@@ -187,24 +200,24 @@ const DestinationDetail = () => {
           <div className="relative z-10 space-y-4">
             <div className="flex items-center gap-2 text-indigo-800 dark:text-indigo-400 font-bold uppercase text-xs tracking-widest">
               <Sparkles size={16} />
-              <span>EcoBalance AI Analysis</span>
+              <span>EcoBalance AI Insight</span>
             </div>
             
             {loadingAI ? (
               <div className="flex items-center gap-3 py-4 text-indigo-600 dark:text-indigo-400">
                 <Loader2 size={24} className="animate-spin" />
-                <span className="font-medium">Synthesizing raw sensor data...</span>
+                <span className="font-medium">Synthesizing sensor feed...</span>
               </div>
             ) : (
               <>
                 <p className="text-slate-700 dark:text-slate-300 leading-relaxed font-medium text-lg">
-                  {aiData?.summary || "Interpreting real-world environmental metrics..."}
+                  {aiData?.summary || "Interpreting real-world environmental stress metrics..."}
                 </p>
                 {isPremium && (
                    <div className="bg-emerald-50 dark:bg-emerald-900/20 p-4 rounded-xl text-sm text-emerald-800 dark:text-emerald-300 border border-emerald-100 dark:border-emerald-800 flex items-start gap-3">
                     <ShieldCheck size={18} className="shrink-0 mt-0.5" />
                     <div>
-                      <span className="font-bold">Premium Logic:</span> Safety classification is <span className="underline">{destination.status}</span>. Analysis suggests minimal exposure risks for off-peak visiting based on live trends.
+                      <span className="font-bold">Premium Logic:</span> Safety classification is <span className="underline">{destination.status}</span>. Sensor trends analyzed against 0-100 stress scale.
                     </div>
                   </div>
                 )}
@@ -216,49 +229,24 @@ const DestinationDetail = () => {
         {/* Metrics Grid */}
         <section className="grid grid-cols-1 gap-4">
           <MetricCard 
-            icon={<Wind size={18} />} 
-            label="Air Quality" 
-            value={destination.metrics.airQualityAQI} 
-            unit="AQI" 
-            reference="0–50 AQI"
-            description="Measures particulate matter and ozone in the atmosphere."
-            thresholds={{ good: 50, mod: 100 }}
-          />
-          <MetricCard 
-            icon={<Droplets size={18} />} 
-            label="Water Quality" 
-            value={destination.metrics.waterPPM} 
-            unit="PPM"
-            reference="< 100 PPM"
-            description="Total dissolved solids and mineral concentration in local sources."
-            thresholds={{ good: 100, mod: 300 }}
-          />
-          <MetricCard 
-            icon={<TreePine size={18} />} 
-            label="Soil Health" 
-            value={destination.metrics.soilPPM} 
-            unit="PPM"
-            reference="< 50 PPM"
-            description="Detection of chemical residues and industrial runoff in earth."
-            thresholds={{ good: 50, mod: 200 }}
-          />
-          <MetricCard 
             icon={<Volume2 size={18} />} 
-            label="Noise Level" 
+            label={isLive ? "Sound Stress" : "Noise Level"} 
             value={destination.metrics.noiseDB} 
-            unit="dB"
-            reference="40–60 dB"
-            description="Ambient sound pressure levels in urban/natural centers."
-            thresholds={{ good: 50, mod: 75 }}
+            unit={isLive ? "/100" : "dB"} 
+            reference={isLive ? "Scale: 0–30 Safe" : "40–60 dB"}
+            description={isLive ? "Calculated stress based on ambient acoustic pressure." : "Ambient sound pressure levels in key visitor centers."}
+            thresholds={isLive ? { safe: 30, mod: 60, unsafe: 80 } : { safe: 50, mod: 75, unsafe: 90 }}
+            isLiveStress={isLive}
           />
           <MetricCard 
-            icon={<Users size={18} />} 
-            label="Crowd Density" 
-            value={destination.metrics.crowdDensity} 
-            unit="ppl/m²"
-            reference="< 0.5 ppl/m²"
-            description="Real-time density of people in key visitor districts."
-            thresholds={{ good: 0.5, mod: 2.0 }}
+            icon={<Zap size={18} />} 
+            label={isLive ? "Soil Stress" : "Soil Health"} 
+            value={destination.metrics.soilPPM} 
+            unit={isLive ? "/100" : "PPM"} 
+            reference={isLive ? "Scale: 0–30 Safe" : "< 50 PPM"}
+            description={isLive ? "Index of chemical and industrial residue stress." : "Detection of chemical residues and industrial runoff."}
+            thresholds={isLive ? { safe: 30, mod: 60, unsafe: 80 } : { safe: 50, mod: 200, unsafe: 400 }}
+            isLiveStress={isLive}
           />
           <MetricCard 
             icon={<Building2 size={18} />} 
@@ -267,19 +255,88 @@ const DestinationDetail = () => {
             unit="%"
             reference="< 40%"
             description="Utilization percentage of local utilities and waste systems."
-            thresholds={{ good: 30, mod: 70 }}
+            thresholds={{ safe: 30, mod: 70, unsafe: 90 }}
+            isLiveStress={false}
+          />
+          <MetricCard 
+            icon={<Wind size={18} />} 
+            label="Air Quality" 
+            value={destination.metrics.airQualityAQI} 
+            unit="AQI" 
+            reference="0–50 AQI"
+            description="Measures particulate matter and ozone in the atmosphere."
+            thresholds={{ safe: 50, mod: 100, unsafe: 150 }}
+            isLiveStress={false}
+          />
+          <MetricCard 
+            icon={<Droplets size={18} />} 
+            label="Water Quality" 
+            value={destination.metrics.waterPPM} 
+            unit="PPM"
+            reference="< 100 PPM"
+            description="Total dissolved solids and mineral concentration in local sources."
+            thresholds={{ safe: 100, mod: 300, unsafe: 500 }}
+            isLiveStress={false}
+          />
+          <MetricCard 
+            icon={<Users size={18} />} 
+            label="Crowd Density" 
+            value={destination.metrics.crowdDensity} 
+            unit="ppl/m²"
+            reference="< 0.5 ppl/m²"
+            description="Real-time density of people in key visitor districts."
+            thresholds={{ safe: 0.5, mod: 2.0, unsafe: 4.0 }}
+            isLiveStress={false}
           />
         </section>
 
         {/* Community Feedback */}
-        <section className="space-y-4">
-          <h3 className="font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
-            <MessageSquare size={18} className="text-indigo-500" />
-            Community Insights
-          </h3>
-          <div className="space-y-3">
+        <section className="space-y-6">
+          <div className="flex items-center justify-between">
+            <h3 className="font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
+              <MessageSquare size={18} className="text-indigo-500" />
+              Traveler Reviews
+            </h3>
+            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{destination.communityFeedback.length} Verified Reviews</span>
+          </div>
+
+          {/* Add Review Form */}
+          <form onSubmit={handleAddReview} className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
+            <div className="flex items-center justify-between">
+              <label className="text-[10px] font-bold text-slate-400 uppercase">Write a review</label>
+              <div className="flex items-center gap-1">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <button 
+                    key={star} 
+                    type="button" 
+                    onClick={() => setReviewRating(star)}
+                    className={`${star <= reviewRating ? 'text-amber-400' : 'text-slate-300'} transition-colors`}
+                  >
+                    <Star size={16} fill={star <= reviewRating ? "currentColor" : "none"} />
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="relative">
+              <textarea 
+                placeholder="Share your experience..." 
+                value={reviewText}
+                onChange={(e) => setReviewText(e.target.value)}
+                className="w-full bg-slate-50 dark:bg-slate-800 rounded-xl p-4 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 dark:text-white min-h-[100px] resize-none border border-slate-100 dark:border-slate-700"
+              />
+              <button 
+                type="submit"
+                disabled={submittingReview || !reviewText.trim()}
+                className="absolute bottom-3 right-3 p-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50"
+              >
+                {submittingReview ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
+              </button>
+            </div>
+          </form>
+
+          <div className="space-y-4">
             {destination.communityFeedback.map((fb) => (
-              <div key={fb.id} className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-100 dark:border-slate-800 shadow-sm flex flex-col gap-2">
+              <div key={fb.id} className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-100 dark:border-slate-800 shadow-sm flex flex-col gap-2 animate-in fade-in slide-in-from-top-2 duration-300">
                 <div className="flex justify-between items-center">
                   <span className="font-bold text-slate-700 dark:text-slate-200 text-sm">{fb.user}</span>
                   <div className="flex gap-0.5 text-amber-400">
@@ -297,11 +354,12 @@ const DestinationDetail = () => {
   );
 };
 
-const MetricCard = ({ icon, label, value, unit, reference, description, thresholds }: { icon: any, label: string, value: number, unit: string, reference: string, description: string, thresholds: { good: number, mod: number } }) => {
+const MetricCard = ({ icon, label, value, unit, reference, description, thresholds, isLiveStress }: { icon: any, label: string, value: number, unit: string, reference: string, description: string, thresholds: { safe: number, mod: number, unsafe: number }, isLiveStress: boolean }) => {
   const getInterpretation = () => {
-    if (value <= thresholds.good) return { text: 'Excellent', color: 'text-emerald-500', bg: 'bg-emerald-500/10' };
+    if (value <= thresholds.safe) return { text: isLiveStress ? 'Safe' : 'Excellent', color: 'text-emerald-500', bg: 'bg-emerald-500/10' };
     if (value <= thresholds.mod) return { text: 'Moderate', color: 'text-amber-500', bg: 'bg-amber-500/10' };
-    return { text: 'Critical', color: 'text-rose-500', bg: 'bg-rose-500/10' };
+    if (value <= thresholds.unsafe) return { text: 'Unsafe', color: 'text-orange-500', bg: 'bg-orange-500/10' };
+    return { text: isLiveStress ? 'Critical' : 'Poor', color: 'text-rose-500', bg: 'bg-rose-500/10' };
   };
 
   const status = getInterpretation();
@@ -325,18 +383,18 @@ const MetricCard = ({ icon, label, value, unit, reference, description, threshol
           </div>
           <div className="text-right">
             <div className="text-xl font-black text-slate-900 dark:text-white">
-              {Math.round(value)} <span className="text-xs opacity-40 font-bold uppercase">{unit}</span>
+              {value.toFixed(1)} <span className="text-xs opacity-40 font-bold uppercase">{unit}</span>
             </div>
             <div className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">
-              Ref (Safe): {reference}
+              {reference}
             </div>
           </div>
         </div>
         
         <div className="relative w-full h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
           <div 
-            className={`h-full transition-all duration-1000 ${status.text.includes('Excellent') ? 'bg-emerald-500' : status.text.includes('Moderate') ? 'bg-amber-500' : 'bg-rose-500'}`}
-            style={{ width: `${Math.min(100, (value / (thresholds.mod * 1.5)) * 100)}%` }}
+            className={`h-full transition-all duration-1000 ${status.color.replace('text-', 'bg-')}`}
+            style={{ width: `${Math.min(100, isLiveStress ? value : (value / (thresholds.mod * 1.5)) * 100)}%` }}
           />
         </div>
       </div>

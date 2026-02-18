@@ -6,7 +6,7 @@ const GOOGLE_SHEET_BASE_URL = 'https://docs.google.com/spreadsheets/d/1OE7X1_M6o
 const DEMO_PLACE_ID = 'demo-place-live';
 
 export const apiService = {
-  // Helper to clean numeric values from sheet (e.g., "174.25" -> 174.25)
+  // Helper to clean numeric values from sheet
   cleanNum(val: string): number {
     if (!val) return 0;
     const cleaned = val.replace(/[^0-9.]/g, '');
@@ -16,8 +16,9 @@ export const apiService = {
   // Map sheet status to internal app status
   mapStatus(sheetStatus: string): DestinationStatus {
     const s = sheetStatus?.toLowerCase() || '';
-    if (s.includes('critical') || s.includes('risky') || s.includes('danger')) return 'Risky';
-    if (s.includes('caution') || s.includes('warning') || s.includes('high')) return 'Caution Advised';
+    if (s.includes('critical') || s.includes('danger')) return 'Risky';
+    if (s.includes('unsafe') || s.includes('high')) return 'Risky';
+    if (s.includes('caution') || s.includes('warning') || s.includes('moderate')) return 'Caution Advised';
     if (s.includes('safe') || s.includes('excellent') || s.includes('low')) return 'Recommended';
     if (s.includes('closure') || s.includes('stop')) return 'Not Recommended';
     return 'Recommended';
@@ -48,7 +49,6 @@ export const apiService = {
   // --- GOOGLE SHEETS SYNC ---
   async fetchLiveDemoData(): Promise<Partial<Destination> & { lastSync: string } | null> {
     try {
-      // CACHE BUSTING: Forced refresh
       const cacheBuster = `&t=${Date.now()}`;
       const response = await fetch(`${GOOGLE_SHEET_BASE_URL}${cacheBuster}`, {
         cache: 'no-store',
@@ -58,8 +58,6 @@ export const apiService = {
       if (!response.ok) throw new Error('Failed to fetch Google Sheet');
       
       const text = await response.text();
-      
-      // Robust CSV parsing
       const allRows = text.split(/\r?\n/).filter(row => row.trim().length > 0).map(row => {
         return row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(cell => 
           cell.replace(/^"|"$/g, '').trim()
@@ -71,34 +69,33 @@ export const apiService = {
       /**
        * MAPPING BASED ON USER SCREENSHOT:
        * Index 0 (A): Time
-       * Index 1 (B): SoundRaw -> noiseDB
-       * Index 2 (C): SoilRaw -> soilPPM
-       * Index 3 (D): SoundStress
-       * Index 4 (E): SoilStress
-       * Index 5 (F): EcoStress -> infraLoad (as a % of stress)
-       * Index 6 (G): Status -> overall status
+       * Index 1 (B): SoundRaw
+       * Index 2 (C): SoilRaw
+       * Index 3 (D): SoundStress -> noiseDB (Reading out of 100)
+       * Index 4 (E): SoilStress -> soilPPM (Reading out of 100)
+       * Index 5 (F): EcoStress
+       * Index 6 (G): Status
        * Index 7 (H): Advisory
        */
       
-      // We take the LAST row because the sheet is a log
       const latestData = allRows[allRows.length - 1];
-      console.debug('API: Syncing Latest Row:', latestData);
+      const demoMock = MOCK_DESTINATIONS.find(d => d.id === DEMO_PLACE_ID);
       
       return {
         metrics: {
-          airQualityAQI: this.cleanNum(latestData[3]) || 25, // Fallback if not specifically in sheet
-          waterPPM: this.cleanNum(latestData[4]) || 40,    // Fallback if not specifically in sheet
-          soilPPM: this.cleanNum(latestData[2]),          // SoilRaw from Col C
-          noiseDB: this.cleanNum(latestData[1]),          // SoundRaw from Col B
-          crowdDensity: 0.5,                               // Static fallback
-          infraLoad: this.cleanNum(latestData[5]),        // EcoStress from Col F
+          airQualityAQI: demoMock?.metrics.airQualityAQI || 20,
+          waterPPM: demoMock?.metrics.waterPPM || 50,
+          soilPPM: this.cleanNum(latestData[4]), // Use SoilStress (Col E)
+          noiseDB: this.cleanNum(latestData[3]), // Use SoundStress (Col D)
+          crowdDensity: demoMock?.metrics.crowdDensity || 0.2,
+          infraLoad: demoMock?.metrics.infraLoad || 20,
         },
-        status: this.mapStatus(latestData[6]),            // Status from Col G
+        status: this.mapStatus(latestData[6]),
         lastSync: latestData[0] || new Date().toLocaleTimeString(),
-        localSignals: [latestData[7] || "Stable Environment"] // Advisory from Col H
+        localSignals: [latestData[7] || "Stable Environment"]
       };
     } catch (error) {
-      console.error('API: Google Sheets Sync Error:', error);
+      console.error('API: Google Sheets Error:', error);
       return null;
     }
   },
