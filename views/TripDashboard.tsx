@@ -4,7 +4,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { apiService } from '../services/apiService';
 import { MOCK_GUIDES, MOCK_DESTINATIONS } from '../constants';
 import { Booking, TourGuide, Destination } from '../types';
-import { Clock, MapPin, Navigation, MessageCircle, Thermometer, ShieldAlert, ChevronRight, Activity, Zap, Leaf, Award, Star, XCircle, AlertCircle, Loader2 } from 'lucide-react';
+import { Clock, MapPin, Navigation, MessageCircle, Star, XCircle, AlertCircle, Loader2, Activity } from 'lucide-react';
 
 const TripDashboard = () => {
   const navigate = useNavigate();
@@ -36,13 +36,13 @@ const TripDashboard = () => {
     init();
   }, []);
 
-  // Ensure Google Maps is loaded on this page
+  // Robust Script Loader for Trip Dashboard
   useEffect(() => {
-    // Check multiple possible locations for the API key
-    const apiKey = (import.meta as any).env?.VITE_GOOGLE_MAPS_API_KEY || process.env.VITE_GOOGLE_MAPS_API_KEY;
+    // FIX: Cast import.meta to any to resolve "Property 'env' does not exist on type 'ImportMeta'" error.
+    const apiKey = (import.meta as any).env?.VITE_GOOGLE_MAPS_API_KEY || (process.env && process.env.VITE_GOOGLE_MAPS_API_KEY);
     
     if (!apiKey) {
-      console.warn("VITE_GOOGLE_MAPS_API_KEY missing in TripDashboard");
+      console.warn("VITE_GOOGLE_MAPS_API_KEY missing in TripDashboard context.");
       return;
     }
 
@@ -100,7 +100,6 @@ const TripDashboard = () => {
     }
   };
 
-  // Trigger map initialization when maps and data are ready
   useEffect(() => {
     if (!loading && mapsReady && booking && destination) {
       fetchDirections();
@@ -109,7 +108,6 @@ const TripDashboard = () => {
     }
   }, [loading, mapsReady, booking, destination]);
 
-  // Countdown Logic
   useEffect(() => {
     if (!booking) return;
     const target = new Date(`${booking.date}T${booking.time || '09:00'}:00`).getTime();
@@ -168,7 +166,6 @@ const TripDashboard = () => {
         </div>
       </header>
 
-      {/* Countdown Card */}
       <section className="bg-slate-900 rounded-3xl p-8 text-white shadow-2xl relative overflow-hidden ring-1 ring-white/10">
         <div className="relative z-10 space-y-6">
           <div className="text-[10px] font-black uppercase tracking-[0.3em] text-blue-400 text-center">T-Minus Departure</div>
@@ -182,7 +179,6 @@ const TripDashboard = () => {
         <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-blue-500 to-transparent opacity-50" />
       </section>
 
-      {/* Map Section */}
       <section className="space-y-4">
         <div className="flex justify-between items-end">
           <h2 className="font-black text-xs uppercase tracking-widest flex items-center gap-2">
@@ -199,7 +195,6 @@ const TripDashboard = () => {
              <span className="text-xs font-bold uppercase tracking-widest">Initializing Map Engine...</span>
            </div>}
         </div>
-        
         <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-100 dark:border-slate-800 grid grid-cols-3 gap-4 shadow-sm">
            <MapDetailItem label="Distance" value={mapDetails.distance || `${booking.distanceKm} km`} />
            <MapDetailItem label="Est. Time" value={mapDetails.duration || '--'} />
@@ -207,7 +202,6 @@ const TripDashboard = () => {
         </div>
       </section>
 
-      {/* Guide Card */}
       {guide && (
         <section className="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-slate-200 dark:border-slate-800 flex items-center gap-4 shadow-sm">
           <img src={guide.avatar} className="w-16 h-16 rounded-2xl object-cover shadow-lg" />
@@ -223,7 +217,6 @@ const TripDashboard = () => {
         </section>
       )}
 
-      {/* Cancel Action */}
       <section className="pt-8 border-t border-slate-100 dark:border-slate-900">
         <button 
           onClick={() => setShowCancelModal(true)}
@@ -233,7 +226,6 @@ const TripDashboard = () => {
         </button>
       </section>
 
-      {/* Cancellation Modal */}
       {showCancelModal && (
         <div className="fixed inset-0 z-[100] bg-slate-900/80 backdrop-blur-md flex items-center justify-center p-6 animate-in fade-in duration-300">
            <div className="bg-white dark:bg-slate-900 w-full max-w-sm rounded-3xl p-8 space-y-6 shadow-2xl animate-in zoom-in-95 ring-1 ring-white/10">

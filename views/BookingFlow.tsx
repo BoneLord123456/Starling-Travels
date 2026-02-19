@@ -29,11 +29,13 @@ const BookingFlow = () => {
 
   // Robust Script Loader
   useEffect(() => {
-    // Check multiple possible locations for the API key
-    const apiKey = (import.meta as any).env?.VITE_GOOGLE_MAPS_API_KEY || process.env.VITE_GOOGLE_MAPS_API_KEY;
+    // 1. Primary: Use Vite's native environment variable handling
+    // 2. Secondary: Use the defined process.env fallback
+    // FIX: Cast import.meta to any to resolve "Property 'env' does not exist on type 'ImportMeta'" error.
+    const apiKey = (import.meta as any).env?.VITE_GOOGLE_MAPS_API_KEY || (process.env && process.env.VITE_GOOGLE_MAPS_API_KEY);
     
     if (!apiKey) {
-      console.error("CRITICAL: VITE_GOOGLE_MAPS_API_KEY is not defined in environment variables.");
+      console.error("CRITICAL: VITE_GOOGLE_MAPS_API_KEY is not defined.");
       setMapsStatus('error');
       return;
     }
@@ -43,7 +45,6 @@ const BookingFlow = () => {
       return;
     }
 
-    // Check if script already exists to avoid duplicates
     const existingScript = document.getElementById('google-maps-sdk');
     if (existingScript) {
       existingScript.addEventListener('load', () => setMapsStatus('ready'));
@@ -61,7 +62,6 @@ const BookingFlow = () => {
     document.head.appendChild(script);
   }, []);
 
-  // Initialize Autocomplete once ready
   useEffect(() => {
     if (mapsStatus === 'ready' && pickupInputRef.current && (window as any).google) {
       initAutocomplete();
@@ -108,19 +108,15 @@ const BookingFlow = () => {
 
   const priceStats = useMemo(() => {
     if (!destination) return { total: 0, base: 0, transport: 0, guide: 0, eco: 0, offset: 0, distance: 0, tax: 0 };
-    
     const distanceKm = realDistanceKm || 25;
     const transportRate = comfort === 'Standard' ? 60 : comfort === 'Premium' ? 140 : 400;
-    
     const base = destination.baseCostPerDay * travelers * duration;
     const guide = 1500 * travelers * duration;
     const transport = Math.round(distanceKm * transportRate);
-    
     const ecoStressAdj = (destination.metrics.ecoStress / 100) * base * 0.4;
     const ecoFund = base * 0.15;
     const offsetFee = offsetCarbon ? (travelers * duration * 150) : 0;
     const tax = (base + guide + transport) * 0.12;
-    
     const minTotal = Math.round(base + guide + transport + ecoStressAdj + ecoFund + offsetFee + tax);
     
     return {
@@ -150,10 +146,8 @@ const BookingFlow = () => {
   const handleFinalPay = async () => {
     setIsProcessing(true);
     await new Promise(r => setTimeout(r, 2000));
-    
     const guides = MOCK_GUIDES[destination!.id] || [];
     const assignedGuide = guides[Math.floor(Math.random() * guides.length)];
-
     const newBooking: Booking = {
       id: Math.random().toString(36).substr(2, 9),
       guideId: assignedGuide.id,
@@ -173,7 +167,6 @@ const BookingFlow = () => {
       distanceKm: priceStats.distance,
       offsetCarbon
     };
-
     await apiService.saveBooking(newBooking);
     setIsProcessing(false);
     setStep(3);
@@ -196,7 +189,7 @@ const BookingFlow = () => {
       {mapsStatus === 'error' && (
         <div className="bg-rose-50 border border-rose-200 p-4 rounded-2xl flex items-center gap-3 text-rose-600 mb-6">
           <AlertTriangle size={20} />
-          <span className="text-sm font-bold">Maps service temporarily unavailable. Please verify VITE_GOOGLE_MAPS_API_KEY in environment variables.</span>
+          <span className="text-sm font-bold">Maps service temporarily unavailable. Please verify VITE_GOOGLE_MAPS_API_KEY in Vercel settings.</span>
         </div>
       )}
 
@@ -300,7 +293,6 @@ const BookingFlow = () => {
                 <div className="text-[10px] font-bold uppercase opacity-70">Incl. Taxes & Eco Fees</div>
               </div>
             </div>
-            
             <div className="space-y-2 pt-2 border-t border-white/10">
               <PriceLine label="Base Cost" value={priceStats.base} />
               <PriceLine label="Guide Fee" value={priceStats.guide} />
