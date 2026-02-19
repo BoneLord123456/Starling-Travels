@@ -27,52 +27,69 @@ const BookingFlow = () => {
   const [validationError, setValidationError] = useState('');
   const [realDistanceKm, setRealDistanceKm] = useState<number | null>(null);
 
-  // Load Google Maps JavaScript API securely
+  // Robust Script Loader
   useEffect(() => {
-    const apiKey = process.env.VITE_GOOGLE_MAPS_API_KEY || "";
+    const apiKey = process.env.VITE_GOOGLE_MAPS_API_KEY;
+    
     if (!apiKey) {
-      console.error("VITE_GOOGLE_MAPS_API_KEY is missing");
+      console.error("CRITICAL: VITE_GOOGLE_MAPS_API_KEY is not defined in environment variables.");
       setMapsStatus('error');
       return;
     }
 
-    if (!(window as any).google) {
-      const script = document.createElement('script');
-      script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places`;
-      script.async = true;
-      script.onerror = () => setMapsStatus('error');
-      script.onload = () => setMapsStatus('ready');
-      document.head.appendChild(script);
-    } else {
+    if ((window as any).google) {
       setMapsStatus('ready');
+      return;
     }
+
+    // Check if script already exists to avoid duplicates
+    const existingScript = document.getElementById('google-maps-sdk');
+    if (existingScript) {
+      existingScript.addEventListener('load', () => setMapsStatus('ready'));
+      existingScript.addEventListener('error', () => setMapsStatus('error'));
+      return;
+    }
+
+    const script = document.createElement('script');
+    script.id = 'google-maps-sdk';
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places`;
+    script.async = true;
+    script.defer = true;
+    script.onload = () => setMapsStatus('ready');
+    script.onerror = () => setMapsStatus('error');
+    document.head.appendChild(script);
   }, []);
 
-  // Initialize Autocomplete
+  // Initialize Autocomplete once ready
   useEffect(() => {
     if (mapsStatus === 'ready' && pickupInputRef.current && (window as any).google) {
-      autocompleteRef.current = new (window as any).google.maps.places.Autocomplete(pickupInputRef.current, {
-        fields: ["formatted_address", "geometry"],
-      });
-
-      autocompleteRef.current.addListener('place_changed', () => {
-        const place = autocompleteRef.current.getPlace();
-        if (place.geometry && place.geometry.location) {
-          setPickup(place.formatted_address || '');
-          setPickupCoords({
-            lat: place.geometry.location.lat(),
-            lng: place.geometry.location.lng()
-          });
-          setValidationError('');
-          calculateRealDistance(place.formatted_address);
-        } else {
-          setValidationError('Please select a valid address from suggestions.');
-        }
-      });
+      initAutocomplete();
     }
   }, [mapsStatus]);
 
-  // Fetch real distance for accurate pricing
+  const initAutocomplete = () => {
+    if (!pickupInputRef.current || !(window as any).google) return;
+
+    autocompleteRef.current = new (window as any).google.maps.places.Autocomplete(pickupInputRef.current, {
+      fields: ["formatted_address", "geometry"],
+    });
+
+    autocompleteRef.current.addListener('place_changed', () => {
+      const place = autocompleteRef.current.getPlace();
+      if (place.geometry && place.geometry.location) {
+        setPickup(place.formatted_address || '');
+        setPickupCoords({
+          lat: place.geometry.location.lat(),
+          lng: place.geometry.location.lng()
+        });
+        setValidationError('');
+        calculateRealDistance(place.formatted_address);
+      } else {
+        setValidationError('Please select a valid address from suggestions.');
+      }
+    });
+  };
+
   const calculateRealDistance = (origin: string) => {
     if (!destination || !(window as any).google) return;
     const service = new (window as any).google.maps.DirectionsService();
@@ -89,11 +106,10 @@ const BookingFlow = () => {
   };
 
   const priceStats = useMemo(() => {
-    if (!destination) return { total: 0, base: 0, transport: 0, guide: 0, eco: 0, offset: 0, distance: 0 };
+    if (!destination) return { total: 0, base: 0, transport: 0, guide: 0, eco: 0, offset: 0, distance: 0, tax: 0 };
     
     const distanceKm = realDistanceKm || 25;
     const transportRate = comfort === 'Standard' ? 60 : comfort === 'Premium' ? 140 : 400;
-    const comfortMult = comfort === 'Standard' ? 1 : comfort === 'Premium' ? 1.8 : 3.5;
     
     const base = destination.baseCostPerDay * travelers * duration;
     const guide = 1500 * travelers * duration;
@@ -179,7 +195,7 @@ const BookingFlow = () => {
       {mapsStatus === 'error' && (
         <div className="bg-rose-50 border border-rose-200 p-4 rounded-2xl flex items-center gap-3 text-rose-600 mb-6">
           <AlertTriangle size={20} />
-          <span className="text-sm font-bold">Maps service temporarily unavailable.</span>
+          <span className="text-sm font-bold">Maps service temporarily unavailable. Please check API Key.</span>
         </div>
       )}
 
@@ -205,7 +221,7 @@ const BookingFlow = () => {
                 <input 
                   ref={pickupInputRef}
                   type="text" 
-                  placeholder={mapsStatus === 'ready' ? "Search address..." : "Initializing Maps..."}
+                  placeholder={mapsStatus === 'ready' ? "Search address..." : "Initializing Maps Engine..."}
                   disabled={mapsStatus !== 'ready'}
                   className={`w-full bg-slate-50 dark:bg-slate-800 p-4 rounded-2xl border font-medium focus:ring-2 focus:ring-blue-500/20 outline-none pr-10 transition-all ${validationError ? 'border-rose-500' : 'border-slate-100 dark:border-slate-700'}`}
                   value={pickup}

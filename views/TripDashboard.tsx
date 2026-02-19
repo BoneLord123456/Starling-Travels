@@ -17,6 +17,7 @@ const TripDashboard = () => {
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [isCancelling, setIsCancelling] = useState(false);
   const [mapDetails, setMapDetails] = useState({ distance: '', duration: '', trafficStatus: 'Normal' });
+  const [mapsReady, setMapsReady] = useState(false);
 
   useEffect(() => {
     const init = async () => {
@@ -33,6 +34,30 @@ const TripDashboard = () => {
       setLoading(false);
     };
     init();
+  }, []);
+
+  // Ensure Google Maps is loaded on this page
+  useEffect(() => {
+    const apiKey = process.env.VITE_GOOGLE_MAPS_API_KEY;
+    if (!apiKey) return;
+
+    if ((window as any).google) {
+      setMapsReady(true);
+      return;
+    }
+
+    const existingScript = document.getElementById('google-maps-sdk');
+    if (existingScript) {
+      existingScript.addEventListener('load', () => setMapsReady(true));
+      return;
+    }
+
+    const script = document.createElement('script');
+    script.id = 'google-maps-sdk';
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places`;
+    script.async = true;
+    script.onload = () => setMapsReady(true);
+    document.head.appendChild(script);
   }, []);
 
   const fetchDirections = () => {
@@ -70,14 +95,14 @@ const TripDashboard = () => {
     }
   };
 
-  // Google Maps Refresh Logic
+  // Trigger map initialization when maps and data are ready
   useEffect(() => {
-    if (!loading && booking && destination) {
+    if (!loading && mapsReady && booking && destination) {
       fetchDirections();
       const interval = setInterval(fetchDirections, 600000); // 10 minutes
       return () => clearInterval(interval);
     }
-  }, [loading, booking, destination]);
+  }, [loading, mapsReady, booking, destination]);
 
   // Countdown Logic
   useEffect(() => {
@@ -164,7 +189,7 @@ const TripDashboard = () => {
           ref={mapRef} 
           className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 h-[400px] shadow-inner overflow-hidden relative"
         >
-           {!(window as any).google && <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 text-slate-400 bg-slate-50 dark:bg-slate-800/50">
+           {!mapsReady && <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 text-slate-400 bg-slate-50 dark:bg-slate-800/50">
              <Loader2 className="animate-spin" size={24} />
              <span className="text-xs font-bold uppercase tracking-widest">Initializing Map Engine...</span>
            </div>}
