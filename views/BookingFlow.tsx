@@ -29,7 +29,8 @@ const BookingFlow = () => {
 
   // Robust Script Loader
   useEffect(() => {
-    const apiKey = process.env.VITE_GOOGLE_MAPS_API_KEY;
+    // Check multiple possible locations for the API key
+    const apiKey = (import.meta as any).env?.VITE_GOOGLE_MAPS_API_KEY || process.env.VITE_GOOGLE_MAPS_API_KEY;
     
     if (!apiKey) {
       console.error("CRITICAL: VITE_GOOGLE_MAPS_API_KEY is not defined in environment variables.");
@@ -195,7 +196,7 @@ const BookingFlow = () => {
       {mapsStatus === 'error' && (
         <div className="bg-rose-50 border border-rose-200 p-4 rounded-2xl flex items-center gap-3 text-rose-600 mb-6">
           <AlertTriangle size={20} />
-          <span className="text-sm font-bold">Maps service temporarily unavailable. Please check API Key.</span>
+          <span className="text-sm font-bold">Maps service temporarily unavailable. Please verify VITE_GOOGLE_MAPS_API_KEY in environment variables.</span>
         </div>
       )}
 

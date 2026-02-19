@@ -38,8 +38,13 @@ const TripDashboard = () => {
 
   // Ensure Google Maps is loaded on this page
   useEffect(() => {
-    const apiKey = process.env.VITE_GOOGLE_MAPS_API_KEY;
-    if (!apiKey) return;
+    // Check multiple possible locations for the API key
+    const apiKey = (import.meta as any).env?.VITE_GOOGLE_MAPS_API_KEY || process.env.VITE_GOOGLE_MAPS_API_KEY;
+    
+    if (!apiKey) {
+      console.warn("VITE_GOOGLE_MAPS_API_KEY missing in TripDashboard");
+      return;
+    }
 
     if ((window as any).google) {
       setMapsReady(true);
