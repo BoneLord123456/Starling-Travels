@@ -23,31 +23,40 @@ export interface Destination {
   description: string;
   baseCostPerDay: number;
   isRiskDropping?: boolean;
-  coordinates?: { lat: number; lng: number }; // Added for maps
 }
 
-export type ComfortLevel = 'Standard' | 'Premium' | 'Eco-Luxury';
+export type ComfortLevel = 'Standard' | 'Premium' | 'Eco-Luxury' | 'VIP-Enhanced';
 export type TripStatus = 'Upcoming' | 'In Transit' | 'Completed' | 'Cancelled';
+
+// Fix: Added TravelRoute interface which was missing and required by constants.ts
+export interface TravelRoute {
+  id: string;
+  type: 'rail' | 'air' | 'road' | 'mixed';
+  time: string;
+  ecoScore: number;
+  crowdLevel: number;
+  comfort: number;
+  safety: number;
+  price: number;
+}
 
 export interface Booking {
   id: string;
   guideId: string;
   destinationId: string;
   date: string;
-  time?: string;
+  time: string;
   travelers: number;
   pickupLocation: string;
-  pickupCoords?: { lat: number; lng: number };
-  duration: number; // days
-  comfortLevel: ComfortLevel;
+  duration: number; 
   minPrice: number;
   contribution: number;
+  isVIP: boolean;
   status: TripStatus;
   carbonFootprint: number;
   ecoPointsEarned: number;
-  distanceKm?: number;
+  receiptNumber: string;
   refundAmount?: number;
-  offsetCarbon?: boolean;
 }
 
 export interface CommunityComment {
@@ -68,6 +77,7 @@ export interface TourGuide {
   reviewCount: number;
   pricePerDay: number;
   isSustainabilityCertified: boolean;
+  // Fix: Added isPremiumOnly property used in constants.ts and GuideMarketplace.tsx
   isPremiumOnly?: boolean;
   bio: string;
 }
@@ -80,15 +90,4 @@ export interface User {
   joinedDate: string;
   ecoPoints: number;
   loyaltyTier: 'Green Explorer' | 'Earth Guardian' | 'Planet Partner';
-}
-
-export interface TravelRoute {
-  id: string;
-  type: 'rail' | 'air' | 'road' | 'mixed';
-  time: string;
-  ecoScore: number;
-  crowdLevel: number;
-  comfort: number;
-  safety: number;
-  price: number;
 }

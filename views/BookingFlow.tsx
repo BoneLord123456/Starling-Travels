@@ -1,255 +1,114 @@
 
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { MOCK_DESTINATIONS, MOCK_GUIDES } from '../constants';
 import { apiService } from '../services/apiService';
-import { ArrowLeft, Users, Calendar, Clock, MapPin, CreditCard, ShieldCheck, Loader2, Minus, Plus, ChevronRight, CheckCircle2, Leaf, AlertTriangle } from 'lucide-react';
-import { Booking, ComfortLevel, TripStatus } from '../types';
+import { ArrowLeft, Users, Calendar, Clock, MapPin, CreditCard, ShieldCheck, Minus, Plus, ChevronRight, CheckCircle2, Leaf, Loader2, Info, Receipt, Crown } from 'lucide-react';
+import { Booking, TripStatus } from '../types';
 
 const BookingFlow = () => {
   const { destId } = useParams<{ destId: string }>();
   const navigate = useNavigate();
   const destination = MOCK_DESTINATIONS.find(d => d.id === destId);
-  const pickupInputRef = useRef<HTMLInputElement>(null);
-  const autocompleteRef = useRef<any>(null);
 
   const [step, setStep] = useState(1);
   const [travelers, setTravelers] = useState(1);
-  const [pickup, setPickup] = useState('');
-  const [pickupCoords, setPickupCoords] = useState<{lat: number, lng: number} | null>(null);
-  const [date, setDate] = useState('');
   const [duration, setDuration] = useState(1);
-  const [comfort, setComfort] = useState<ComfortLevel>('Standard');
-  const [offsetCarbon, setOffsetCarbon] = useState(false);
+  const [pickup, setPickup] = useState('');
+  const [date, setDate] = useState('');
   const [contribution, setContribution] = useState(0);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [mapsStatus, setMapsStatus] = useState<'loading' | 'ready' | 'error'>('loading');
-  const [validationError, setValidationError] = useState('');
-  const [realDistanceKm, setRealDistanceKm] = useState<number | null>(null);
-
-  // Script Loader: Handles both initial mount and re-renders
-  useEffect(() => {
-    // Priority 1: explicitly defined in vite.config.ts define block
-    // Priority 2: Vite's native import.meta.env
-    const apiKey = (process.env && process.env.VITE_GOOGLE_MAPS_API_KEY) || 
-                   (import.meta as any).env?.VITE_GOOGLE_MAPS_API_KEY;
-    
-    if (!apiKey) {
-      console.error("EcoBalance Maps Error: VITE_GOOGLE_MAPS_API_KEY is missing from environment.");
-      setMapsStatus('error');
-      return;
-    }
-
-    if ((window as any).google?.maps?.places) {
-      setMapsStatus('ready');
-      return;
-    }
-
-    const scriptId = 'google-maps-sdk';
-    let script = document.getElementById(scriptId) as HTMLScriptElement;
-
-    if (!script) {
-      script = document.createElement('script');
-      script.id = scriptId;
-      script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places`;
-      script.async = true;
-      script.defer = true;
-      document.head.appendChild(script);
-    }
-
-    const handleLoad = () => setMapsStatus('ready');
-    const handleError = () => setMapsStatus('error');
-
-    script.addEventListener('load', handleLoad);
-    script.addEventListener('error', handleError);
-
-    return () => {
-      script.removeEventListener('load', handleLoad);
-      script.removeEventListener('error', handleError);
-    };
-  }, []);
-
-  // Initialize Autocomplete specifically when step 1 is active and input is mounted
-  useEffect(() => {
-    if (step === 1 && mapsStatus === 'ready' && pickupInputRef.current) {
-      initAutocomplete();
-    }
-  }, [step, mapsStatus]);
-
-  const initAutocomplete = () => {
-    if (!pickupInputRef.current || !(window as any).google?.maps?.places) return;
-    
-    // Cleanup old instance if it exists to prevent memory leaks and duplicate UI
-    if (autocompleteRef.current) {
-      (window as any).google.maps.event.clearInstanceListeners(autocompleteRef.current);
-    }
-
-    autocompleteRef.current = new (window as any).google.maps.places.Autocomplete(pickupInputRef.current, {
-      fields: ["formatted_address", "geometry"],
-    });
-
-    autocompleteRef.current.addListener('place_changed', () => {
-      const place = autocompleteRef.current.getPlace();
-      if (place.geometry && place.geometry.location) {
-        const address = place.formatted_address || '';
-        setPickup(address);
-        setPickupCoords({
-          lat: place.geometry.location.lat(),
-          lng: place.geometry.location.lng()
-        });
-        setValidationError('');
-        calculateRealDistance(address);
-      } else {
-        setValidationError('Please select a valid address from the suggestions.');
-      }
-    });
-  };
-
-  const calculateRealDistance = (origin: string) => {
-    if (!destination || !(window as any).google?.maps?.DirectionsService) return;
-    const service = new (window as any).google.maps.DirectionsService();
-    service.route({
-      origin: origin,
-      destination: `${destination.name}, ${destination.country}`,
-      travelMode: (window as any).google.maps.TravelMode.DRIVING,
-    }, (result: any, status: any) => {
-      if (status === 'OK' && result.routes[0].legs[0]) {
-        const distanceMeters = result.routes[0].legs[0].distance.value;
-        setRealDistanceKm(distanceMeters / 1000);
-      }
-    });
-  };
+  const [error, setError] = useState('');
 
   const priceStats = useMemo(() => {
-    if (!destination) return { total: 0, base: 0, transport: 0, guide: 0, eco: 0, offset: 0, distance: 0, tax: 0 };
-    const distanceKm = realDistanceKm || 25;
-    const transportRate = comfort === 'Standard' ? 60 : comfort === 'Premium' ? 140 : 400;
-    const base = destination.baseCostPerDay * travelers * duration;
-    const guide = 1500 * travelers * duration;
-    const transport = Math.round(distanceKm * transportRate);
-    const ecoStressAdj = (destination.metrics.ecoStress / 100) * base * 0.4;
-    const ecoFund = base * 0.15;
-    const offsetFee = offsetCarbon ? (travelers * duration * 150) : 0;
-    const tax = (base + guide + transport) * 0.12;
-    const minTotal = Math.round(base + guide + transport + ecoStressAdj + ecoFund + offsetFee + tax);
+    if (!destination) return { total: 0, base: 0, tax: 0, platform: 500, ecoAdj: 0 };
     
-    return {
-      total: minTotal,
-      base: Math.round(base),
-      transport,
-      guide: Math.round(guide),
-      eco: Math.round(ecoFund + ecoStressAdj),
-      offset: offsetFee,
-      tax: Math.round(tax),
-      distance: Math.round(distanceKm)
-    };
-  }, [destination, travelers, duration, comfort, offsetCarbon, realDistanceKm]);
+    const base = destination.baseCostPerDay * duration * travelers * 80; // Scale to INR
+    const ecoAdj = destination.metrics.ecoStress * 250;
+    const platform = 500;
+    const subtotal = base + ecoAdj + platform;
+    const tax = subtotal * 0.18;
+    const total = Math.round(subtotal + tax);
 
-  useEffect(() => {
+    return { total, base: Math.round(base), tax: Math.round(tax), platform, ecoAdj: Math.round(ecoAdj) };
+  }, [destination, travelers, duration]);
+
+  // Sync contribution with min price initially
+  useMemo(() => {
     setContribution(priceStats.total);
   }, [priceStats.total]);
 
-  const handleProceedToPayment = () => {
-    if (!pickupCoords) {
-      setValidationError('Search and select a pickup location from the suggestions.');
+  const handleProcessPayment = async () => {
+    if (contribution < priceStats.total) {
+      setError(`Amount must be equal to or greater than ₹${priceStats.total}.`);
       return;
     }
-    setStep(2);
-  };
-
-  const handleFinalPay = async () => {
+    setError('');
     setIsProcessing(true);
-    await new Promise(r => setTimeout(r, 2000));
+    
+    // Simulate Payment Gateway
+    await new Promise(r => setTimeout(r, 3000));
+
     const guides = MOCK_GUIDES[destination!.id] || [];
-    const assignedGuide = guides[Math.floor(Math.random() * guides.length)];
+    const assignedGuide = guides[0];
+
     const newBooking: Booking = {
-      id: Math.random().toString(36).substr(2, 9),
+      id: Math.random().toString(36).substr(2, 9).toUpperCase(),
       guideId: assignedGuide.id,
       destinationId: destination!.id,
       date,
       time: '09:00',
       travelers,
       pickupLocation: pickup,
-      pickupCoords: pickupCoords!,
       duration,
-      comfortLevel: comfort,
       minPrice: priceStats.total,
-      contribution,
+      contribution: contribution,
+      isVIP: contribution > priceStats.total,
       status: 'Upcoming' as TripStatus,
-      carbonFootprint: Math.round(travelers * duration * (comfort === 'Eco-Luxury' ? 8 : 22)),
-      ecoPointsEarned: Math.round(contribution / 50),
-      distanceKm: priceStats.distance,
-      offsetCarbon
+      carbonFootprint: travelers * duration * 12,
+      ecoPointsEarned: Math.round(contribution / 100),
+      receiptNumber: `EB-${Date.now()}`
     };
+
     await apiService.saveBooking(newBooking);
     setIsProcessing(false);
     setStep(3);
   };
 
-  if (!destination) return <div className="p-10 text-center font-bold">Destination not found.</div>;
+  if (!destination) return <div className="p-10 text-center font-bold">Expedition data missing.</div>;
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 p-6 pb-24">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 p-6 pb-24 transition-colors">
       <header className="flex items-center gap-4 mb-8">
         <button onClick={() => navigate(-1)} className="p-2 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm transition-transform active:scale-90">
           <ArrowLeft size={20} />
         </button>
         <div>
-          <h1 className="text-xl font-black">Book My Trip</h1>
-          <p className="text-xs text-slate-500 uppercase font-bold tracking-widest">{destination.name}</p>
+          <h1 className="text-xl font-black tracking-tight">Expedition Booking</h1>
+          <p className="text-[10px] text-slate-500 uppercase font-bold tracking-widest">{destination.name}</p>
         </div>
       </header>
-
-      {mapsStatus === 'error' && (
-        <div className="bg-rose-50 border border-rose-200 p-4 rounded-2xl flex items-center gap-3 text-rose-600 mb-6">
-          <AlertTriangle size={20} />
-          <span className="text-sm font-bold">Maps API key missing or invalid. Check your Vercel/Environment settings.</span>
-        </div>
-      )}
 
       {step === 1 && (
         <div className="space-y-6 max-w-lg mx-auto animate-in slide-in-from-bottom-4 duration-500">
           <section className="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-200 dark:border-slate-800 shadow-sm space-y-6">
-            <div className="flex items-center justify-between">
-              <label className="text-xs font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                <Users size={14}/> Travelers
-              </label>
-              <div className="flex items-center gap-4 bg-slate-100 dark:bg-slate-800 px-3 py-1 rounded-xl">
-                <button onClick={() => setTravelers(Math.max(1, travelers - 1))} className="p-1 text-slate-500"><Minus size={16}/></button>
-                <span className="font-black text-lg w-4 text-center">{travelers}</span>
-                <button onClick={() => setTravelers(travelers + 1)} className="p-1 text-slate-500"><Plus size={16}/></button>
-              </div>
-            </div>
-
             <div className="space-y-2">
-              <label className="text-xs font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                <MapPin size={14}/> Pickup Location
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                <MapPin size={12}/> Pickup Location
               </label>
-              <div className="relative">
-                <input 
-                  ref={pickupInputRef}
-                  type="text" 
-                  placeholder={mapsStatus === 'ready' ? "Start typing an address..." : "Initializing Maps Engine..."}
-                  disabled={mapsStatus !== 'ready'}
-                  className={`w-full bg-slate-50 dark:bg-slate-800 p-4 rounded-2xl border font-medium focus:ring-2 focus:ring-blue-500/20 outline-none pr-10 transition-all ${validationError ? 'border-rose-500' : 'border-slate-100 dark:border-slate-700'}`}
-                  value={pickup}
-                  onChange={(e) => {
-                    setPickup(e.target.value);
-                    if (pickupCoords) setPickupCoords(null);
-                  }}
-                />
-                {mapsStatus === 'loading' && <Loader2 className="absolute right-4 top-1/2 -translate-y-1/2 animate-spin text-slate-400" size={16}/>}
-              </div>
-              {validationError && <p className="text-rose-500 text-[10px] font-black uppercase flex items-center gap-1"><AlertTriangle size={12}/> {validationError}</p>}
-              {!pickupCoords && pickup.length > 3 && !validationError && (
-                <p className="text-blue-500 text-[9px] font-bold uppercase animate-pulse">Select an address from the dropdown list</p>
-              )}
+              <input 
+                type="text" 
+                placeholder="Enter address, hotel, or landmark..."
+                className="w-full bg-slate-50 dark:bg-slate-800 p-4 rounded-2xl border border-slate-100 dark:border-slate-700 font-medium focus:ring-2 focus:ring-emerald-500/20 outline-none transition-all"
+                value={pickup}
+                onChange={(e) => setPickup(e.target.value)}
+              />
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <label className="text-xs font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                  <Calendar size={14}/> Trip Date
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                  <Calendar size={12}/> Trip Date
                 </label>
                 <input 
                   type="date" 
@@ -259,89 +118,85 @@ const BookingFlow = () => {
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-xs font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                  <Clock size={14}/> Duration (Days)
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                  <Clock size={12}/> Days (Max 30)
                 </label>
                 <input 
-                  type="number" 
-                  min="1"
+                  type="number" min="1" max="30"
                   className="w-full bg-slate-50 dark:bg-slate-800 p-4 rounded-2xl border border-slate-100 dark:border-slate-700 font-bold outline-none"
                   value={duration}
-                  onChange={(e) => setDuration(Math.max(1, parseInt(e.target.value) || 1))}
+                  onChange={(e) => setDuration(Math.min(30, Math.max(1, parseInt(e.target.value) || 1)))}
                 />
               </div>
             </div>
 
             <div className="space-y-2">
-              <label className="text-xs font-black text-slate-400 uppercase tracking-widest">Comfort Level</label>
-              <div className="grid grid-cols-3 gap-2">
-                {(['Standard', 'Premium', 'Eco-Luxury'] as ComfortLevel[]).map(c => (
-                  <button 
-                    key={c} 
-                    onClick={() => setComfort(c)}
-                    className={`py-3 rounded-xl font-bold text-[10px] uppercase tracking-wider border transition-all ${comfort === c ? 'bg-blue-600 border-blue-600 text-white shadow-lg' : 'bg-slate-50 dark:bg-slate-800 border-slate-100 dark:border-slate-700'}`}
-                  >
-                    {c}
-                  </button>
-                ))}
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                <Users size={12}/> Travelers (Max 20)
+              </label>
+              <div className="flex items-center gap-4 bg-slate-100 dark:bg-slate-800 px-4 py-3 rounded-2xl border border-slate-200 dark:border-slate-700">
+                <button onClick={() => setTravelers(Math.max(1, travelers - 1))} className="p-1 text-slate-500 hover:bg-white dark:hover:bg-slate-700 rounded-lg"><Minus size={16}/></button>
+                <input 
+                  type="number" 
+                  className="bg-transparent border-none outline-none font-black text-xl w-full text-center" 
+                  value={travelers} 
+                  onChange={(e) => setTravelers(Math.min(20, Math.max(1, parseInt(e.target.value) || 1)))}
+                />
+                <button onClick={() => setTravelers(Math.min(20, travelers + 1))} className="p-1 text-slate-500 hover:bg-white dark:hover:bg-slate-700 rounded-lg"><Plus size={16}/></button>
               </div>
             </div>
-
-            <button 
-              onClick={() => setOffsetCarbon(!offsetCarbon)}
-              className={`w-full p-4 rounded-2xl border flex items-center justify-between transition-all ${offsetCarbon ? 'bg-emerald-600 text-white border-emerald-600 shadow-lg' : 'bg-white dark:bg-slate-800 border-slate-100 dark:border-slate-700'}`}
-            >
-              <div className="flex items-center gap-3">
-                 <Leaf size={18} />
-                 <div className="text-left">
-                    <div className="text-xs font-black">Carbon Offset Program</div>
-                    <div className="text-[9px] opacity-80 uppercase font-bold">Invest in reforestation</div>
-                 </div>
-              </div>
-              <div className="text-xs font-black">+ ₹{travelers * duration * 150}</div>
-            </button>
           </section>
 
           <section className="bg-slate-900 rounded-3xl p-6 text-white shadow-xl space-y-4">
-            <div className="flex justify-between items-start">
-              <h3 className="font-black text-lg">Precise Trip Price</h3>
-              <div className="text-right">
-                <div className="text-3xl font-black">₹{priceStats.total}</div>
-                <div className="text-[10px] font-bold uppercase opacity-70">Incl. Taxes & Eco Fees</div>
-              </div>
+            <div className="flex justify-between items-center mb-2">
+              <h3 className="font-black text-sm uppercase tracking-widest text-emerald-400">Price Breakdown</h3>
+              <Info size={14} className="opacity-40" />
             </div>
-            <div className="space-y-2 pt-2 border-t border-white/10">
-              <PriceLine label="Base Cost" value={priceStats.base} />
-              <PriceLine label="Guide Fee" value={priceStats.guide} />
-              <PriceLine label="Transport Fee" value={priceStats.transport} hint={realDistanceKm ? `~${realDistanceKm.toFixed(1)} km` : `Est. 25 km`} />
-              <PriceLine label="Eco-Conservation" value={priceStats.eco} />
-              {offsetCarbon && <PriceLine label="Carbon Offset" value={priceStats.offset} />}
-              <PriceLine label="GST / Taxes (12%)" value={priceStats.tax} />
+            <div className="space-y-2 opacity-80 text-xs">
+              <div className="flex justify-between"><span>Base Rate ({duration} days)</span><span>₹{priceStats.base}</span></div>
+              <div className="flex justify-between"><span>Eco-Impact Adjustment</span><span>₹{priceStats.ecoAdj}</span></div>
+              <div className="flex justify-between"><span>Platform Surcharge</span><span>₹{priceStats.platform}</span></div>
+              <div className="flex justify-between"><span>GST (18%)</span><span>₹{priceStats.tax}</span></div>
+            </div>
+            <div className="pt-4 border-t border-white/10 flex justify-between items-end">
+              <div className="text-[10px] font-black uppercase tracking-widest opacity-50">Minimum Payable</div>
+              <div className="text-3xl font-black">₹{priceStats.total}</div>
             </div>
           </section>
 
-          <section className="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-200 dark:border-slate-800 space-y-4">
-            <h3 className="font-black text-sm uppercase tracking-widest">Choose Your Contribution</h3>
+          <section className="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
+            <div className="flex justify-between items-center">
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Your Contribution</label>
+              {contribution > priceStats.total && (
+                <div className="bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-tighter flex items-center gap-1 border border-amber-200 animate-pulse">
+                  <Crown size={10} /> VIP Unlock
+                </div>
+              )}
+            </div>
             <div className="relative">
-              <span className="absolute left-4 top-1/2 -translate-y-1/2 font-black text-xl text-slate-400">₹</span>
+              <span className="absolute left-4 top-1/2 -translate-y-1/2 font-black text-2xl text-slate-400">₹</span>
               <input 
                 type="number" 
-                className="w-full bg-slate-50 dark:bg-slate-800 pl-10 pr-4 py-4 rounded-2xl border border-slate-100 dark:border-slate-700 font-black text-2xl outline-none"
+                className="w-full bg-slate-50 dark:bg-slate-800 pl-10 pr-4 py-4 rounded-2xl border border-slate-100 dark:border-slate-700 font-black text-3xl outline-none"
                 value={contribution}
                 onChange={(e) => setContribution(parseInt(e.target.value) || 0)}
               />
             </div>
-            {contribution < priceStats.total && (
-              <p className="text-rose-500 text-[10px] font-black uppercase flex items-center gap-1"><ShieldCheck size={12}/> Contribution must be ≥ required minimum.</p>
+            {contribution < priceStats.total ? (
+              <p className="text-rose-500 text-[10px] font-black uppercase flex items-center gap-1"><Info size={12}/> Amount must be equal to or greater than minimum price.</p>
+            ) : contribution === priceStats.total ? (
+              <p className="text-slate-400 text-[10px] font-bold uppercase">Standard experience selected.</p>
+            ) : (
+              <p className="text-emerald-500 text-[10px] font-black uppercase flex items-center gap-1 animate-bounce"><Crown size={12}/> VIP Enhanced Experience Activated.</p>
             )}
           </section>
 
           <button 
-            disabled={contribution < priceStats.total || !pickupCoords || !date || isProcessing}
-            onClick={handleProceedToPayment}
-            className="w-full bg-blue-600 text-white py-5 rounded-2xl font-black uppercase tracking-widest shadow-xl transition-all active:scale-[0.98] disabled:opacity-50"
+            disabled={!pickup || !date || contribution < priceStats.total}
+            onClick={() => setStep(2)}
+            className="w-full bg-slate-900 dark:bg-emerald-600 text-white py-5 rounded-2xl font-black uppercase tracking-widest shadow-xl transition-all active:scale-[0.98] disabled:opacity-50"
           >
-            Confirm & Pay ₹{contribution}
+            Review & Pay ₹{contribution}
           </button>
         </div>
       )}
@@ -354,16 +209,21 @@ const BookingFlow = () => {
                   <CreditCard size={32} />
                 </div>
                 <div className="space-y-2">
-                  <h3 className="text-2xl font-black text-slate-900">Final Payment</h3>
-                  <p className="text-sm text-slate-500">Securing your spot at {destination.name}</p>
+                  <h3 className="text-2xl font-black text-slate-900">Final Authorization</h3>
+                  <p className="text-sm text-slate-500">Processing ₹{contribution} for your expedition at {destination.name}</p>
                 </div>
-                <button onClick={handleFinalPay} className="w-full bg-blue-600 text-white py-4 rounded-2xl font-black shadow-lg">Confirm Payment</button>
-                <button onClick={() => setStep(1)} className="text-xs text-slate-400 font-bold">Go Back</button>
+                <div className="space-y-3">
+                  <button onClick={handleProcessPayment} className="w-full bg-emerald-600 text-white py-4 rounded-2xl font-black shadow-lg">Pay Now</button>
+                  <button onClick={() => setStep(1)} className="w-full text-xs text-slate-400 font-bold py-2">Go Back</button>
+                </div>
              </div>
            ) : (
              <div className="text-center space-y-6">
-                <Loader2 className="animate-spin text-white mx-auto" size={48} />
-                <h3 className="text-2xl font-black text-white">Authorizing Secure Payment...</h3>
+                <Loader2 className="animate-spin text-emerald-400 mx-auto" size={56} />
+                <div className="space-y-2">
+                  <h3 className="text-2xl font-black text-white">Securing Funds...</h3>
+                  <p className="text-emerald-400/60 text-xs font-bold uppercase tracking-widest">Encypting Ledger Entry</p>
+                </div>
              </div>
            )}
         </div>
@@ -371,30 +231,29 @@ const BookingFlow = () => {
 
       {step === 3 && (
         <div className="flex flex-col h-[80vh] items-center justify-center p-8 text-center space-y-8 animate-in zoom-in duration-500">
-          <div className="w-24 h-24 bg-emerald-500 rounded-full flex items-center justify-center text-white shadow-2xl">
+          <div className="w-24 h-24 bg-emerald-500 rounded-full flex items-center justify-center text-white shadow-2xl relative">
             <CheckCircle2 size={48} />
+            <div className="absolute inset-0 rounded-full animate-ping bg-emerald-500 opacity-20" />
           </div>
-          <div className="space-y-3">
-            <h2 className="text-3xl font-black text-slate-900 dark:text-white">Trip Secured!</h2>
-            <p className="text-slate-500 dark:text-slate-400">Your ecological expedition is booked. View details on your dashboard.</p>
+          <div className="space-y-4">
+            <h2 className="text-4xl font-black text-slate-900 dark:text-white tracking-tighter">Trip Secured!</h2>
+            <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
+               <div className="flex items-center justify-center gap-2 text-xs font-black uppercase text-slate-400 tracking-widest">
+                 <Receipt size={14}/> Booking #EB-{Date.now().toString().slice(-6)}
+               </div>
+               <p className="text-slate-500 dark:text-slate-400 text-sm font-medium">Your ecological expedition is booked. We've assigned an expert guide to lead your journey.</p>
+            </div>
           </div>
           <button 
             onClick={() => navigate('/trip-dashboard')}
-            className="w-full max-w-xs bg-slate-900 dark:bg-slate-800 text-white py-5 rounded-2xl font-black uppercase tracking-widest shadow-xl flex items-center justify-center gap-2"
+            className="w-full max-w-xs bg-slate-900 dark:bg-emerald-600 text-white py-5 rounded-2xl font-black uppercase tracking-widest shadow-xl flex items-center justify-center gap-2 transition-transform active:scale-95"
           >
-            Open Trip Dashboard <ChevronRight size={18}/>
+            Launch Dashboard <ChevronRight size={18}/>
           </button>
         </div>
       )}
     </div>
   );
 };
-
-const PriceLine = ({ label, value, hint }: { label: string, value: number, hint?: string }) => (
-  <div className="flex justify-between text-xs opacity-80">
-    <span>{label} {hint && <span className="text-[10px] opacity-60">({hint})</span>}</span>
-    <span className="font-bold">₹{value}</span>
-  </div>
-);
 
 export default BookingFlow;
