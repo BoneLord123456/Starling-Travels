@@ -27,49 +27,62 @@ const BookingFlow = () => {
   const [validationError, setValidationError] = useState('');
   const [realDistanceKm, setRealDistanceKm] = useState<number | null>(null);
 
-  // Robust Script Loader
+  // Script Loader: Handles both initial mount and re-renders
   useEffect(() => {
-    // 1. Primary: Use Vite's native environment variable handling
-    // 2. Secondary: Use the defined process.env fallback
-    // FIX: Cast import.meta to any to resolve "Property 'env' does not exist on type 'ImportMeta'" error.
-    const apiKey = (import.meta as any).env?.VITE_GOOGLE_MAPS_API_KEY || (process.env && process.env.VITE_GOOGLE_MAPS_API_KEY);
+    // Priority 1: explicitly defined in vite.config.ts define block
+    // Priority 2: Vite's native import.meta.env
+    const apiKey = (process.env && process.env.VITE_GOOGLE_MAPS_API_KEY) || 
+                   (import.meta as any).env?.VITE_GOOGLE_MAPS_API_KEY;
     
     if (!apiKey) {
-      console.error("CRITICAL: VITE_GOOGLE_MAPS_API_KEY is not defined.");
+      console.error("EcoBalance Maps Error: VITE_GOOGLE_MAPS_API_KEY is missing from environment.");
       setMapsStatus('error');
       return;
     }
 
-    if ((window as any).google) {
+    if ((window as any).google?.maps?.places) {
       setMapsStatus('ready');
       return;
     }
 
-    const existingScript = document.getElementById('google-maps-sdk');
-    if (existingScript) {
-      existingScript.addEventListener('load', () => setMapsStatus('ready'));
-      existingScript.addEventListener('error', () => setMapsStatus('error'));
-      return;
+    const scriptId = 'google-maps-sdk';
+    let script = document.getElementById(scriptId) as HTMLScriptElement;
+
+    if (!script) {
+      script = document.createElement('script');
+      script.id = scriptId;
+      script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places`;
+      script.async = true;
+      script.defer = true;
+      document.head.appendChild(script);
     }
 
-    const script = document.createElement('script');
-    script.id = 'google-maps-sdk';
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places`;
-    script.async = true;
-    script.defer = true;
-    script.onload = () => setMapsStatus('ready');
-    script.onerror = () => setMapsStatus('error');
-    document.head.appendChild(script);
+    const handleLoad = () => setMapsStatus('ready');
+    const handleError = () => setMapsStatus('error');
+
+    script.addEventListener('load', handleLoad);
+    script.addEventListener('error', handleError);
+
+    return () => {
+      script.removeEventListener('load', handleLoad);
+      script.removeEventListener('error', handleError);
+    };
   }, []);
 
+  // Initialize Autocomplete specifically when step 1 is active and input is mounted
   useEffect(() => {
-    if (mapsStatus === 'ready' && pickupInputRef.current && (window as any).google) {
+    if (step === 1 && mapsStatus === 'ready' && pickupInputRef.current) {
       initAutocomplete();
     }
-  }, [mapsStatus]);
+  }, [step, mapsStatus]);
 
   const initAutocomplete = () => {
-    if (!pickupInputRef.current || !(window as any).google) return;
+    if (!pickupInputRef.current || !(window as any).google?.maps?.places) return;
+    
+    // Cleanup old instance if it exists to prevent memory leaks and duplicate UI
+    if (autocompleteRef.current) {
+      (window as any).google.maps.event.clearInstanceListeners(autocompleteRef.current);
+    }
 
     autocompleteRef.current = new (window as any).google.maps.places.Autocomplete(pickupInputRef.current, {
       fields: ["formatted_address", "geometry"],
@@ -78,21 +91,22 @@ const BookingFlow = () => {
     autocompleteRef.current.addListener('place_changed', () => {
       const place = autocompleteRef.current.getPlace();
       if (place.geometry && place.geometry.location) {
-        setPickup(place.formatted_address || '');
+        const address = place.formatted_address || '';
+        setPickup(address);
         setPickupCoords({
           lat: place.geometry.location.lat(),
           lng: place.geometry.location.lng()
         });
         setValidationError('');
-        calculateRealDistance(place.formatted_address);
+        calculateRealDistance(address);
       } else {
-        setValidationError('Please select a valid address from suggestions.');
+        setValidationError('Please select a valid address from the suggestions.');
       }
     });
   };
 
   const calculateRealDistance = (origin: string) => {
-    if (!destination || !(window as any).google) return;
+    if (!destination || !(window as any).google?.maps?.DirectionsService) return;
     const service = new (window as any).google.maps.DirectionsService();
     service.route({
       origin: origin,
@@ -137,7 +151,7 @@ const BookingFlow = () => {
 
   const handleProceedToPayment = () => {
     if (!pickupCoords) {
-      setValidationError('Please select a valid address from suggestions.');
+      setValidationError('Search and select a pickup location from the suggestions.');
       return;
     }
     setStep(2);
@@ -189,7 +203,7 @@ const BookingFlow = () => {
       {mapsStatus === 'error' && (
         <div className="bg-rose-50 border border-rose-200 p-4 rounded-2xl flex items-center gap-3 text-rose-600 mb-6">
           <AlertTriangle size={20} />
-          <span className="text-sm font-bold">Maps service temporarily unavailable. Please verify VITE_GOOGLE_MAPS_API_KEY in Vercel settings.</span>
+          <span className="text-sm font-bold">Maps API key missing or invalid. Check your Vercel/Environment settings.</span>
         </div>
       )}
 
@@ -215,18 +229,21 @@ const BookingFlow = () => {
                 <input 
                   ref={pickupInputRef}
                   type="text" 
-                  placeholder={mapsStatus === 'ready' ? "Search address..." : "Initializing Maps Engine..."}
+                  placeholder={mapsStatus === 'ready' ? "Start typing an address..." : "Initializing Maps Engine..."}
                   disabled={mapsStatus !== 'ready'}
                   className={`w-full bg-slate-50 dark:bg-slate-800 p-4 rounded-2xl border font-medium focus:ring-2 focus:ring-blue-500/20 outline-none pr-10 transition-all ${validationError ? 'border-rose-500' : 'border-slate-100 dark:border-slate-700'}`}
                   value={pickup}
                   onChange={(e) => {
                     setPickup(e.target.value);
-                    setPickupCoords(null);
+                    if (pickupCoords) setPickupCoords(null);
                   }}
                 />
                 {mapsStatus === 'loading' && <Loader2 className="absolute right-4 top-1/2 -translate-y-1/2 animate-spin text-slate-400" size={16}/>}
               </div>
               {validationError && <p className="text-rose-500 text-[10px] font-black uppercase flex items-center gap-1"><AlertTriangle size={12}/> {validationError}</p>}
+              {!pickupCoords && pickup.length > 3 && !validationError && (
+                <p className="text-blue-500 text-[9px] font-bold uppercase animate-pulse">Select an address from the dropdown list</p>
+              )}
             </div>
 
             <div className="grid grid-cols-2 gap-4">
@@ -296,7 +313,7 @@ const BookingFlow = () => {
             <div className="space-y-2 pt-2 border-t border-white/10">
               <PriceLine label="Base Cost" value={priceStats.base} />
               <PriceLine label="Guide Fee" value={priceStats.guide} />
-              <PriceLine label="Transport Fee" value={priceStats.transport} hint={`~${priceStats.distance} km`} />
+              <PriceLine label="Transport Fee" value={priceStats.transport} hint={realDistanceKm ? `~${realDistanceKm.toFixed(1)} km` : `Est. 25 km`} />
               <PriceLine label="Eco-Conservation" value={priceStats.eco} />
               {offsetCarbon && <PriceLine label="Carbon Offset" value={priceStats.offset} />}
               <PriceLine label="GST / Taxes (12%)" value={priceStats.tax} />
