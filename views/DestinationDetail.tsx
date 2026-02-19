@@ -5,7 +5,7 @@ import { MOCK_DESTINATIONS } from '../constants';
 import { apiService } from '../services/apiService';
 import ScoreBadge from '../components/ScoreBadge';
 import { getDestinationAIOverview } from '../services/geminiService';
-import { Wind, Droplets, Users, ShieldCheck, Sparkles, Loader2, Megaphone, MessageSquare, Star, UsersRound, MessageCircleWarning, Map, Lock, Crown, ArrowLeft, Volume2, Activity, Zap, Send, Thermometer } from 'lucide-react';
+import { Wind, Droplets, Users, ShieldCheck, Sparkles, Loader2, Megaphone, MessageSquare, Star, UsersRound, MessageCircleWarning, Map, Lock, Crown, ArrowLeft, Volume2, Activity, Zap, Send, Thermometer, Ticket } from 'lucide-react';
 import { Destination, CommunityComment } from '../types';
 
 const EcoStressGauge = ({ value, className }: { value: number; className?: string }) => {
@@ -19,13 +19,12 @@ const EcoStressGauge = ({ value, className }: { value: number; className?: strin
       </div>
       
       <div className="relative w-32 h-16 overflow-hidden">
-        {/* Vibrant Gradient Arc */}
         <svg viewBox="0 0 100 55" className="w-full h-full">
           <defs>
             <linearGradient id="vibrantGaugeGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-              <stop offset="0%" stopColor="#22c55e" />   {/* Vibrant Green */}
-              <stop offset="50%" stopColor="#eab308" />  {/* Vibrant Yellow */}
-              <stop offset="100%" stopColor="#ef4444" /> {/* Vibrant Red */}
+              <stop offset="0%" stopColor="#22c55e" />
+              <stop offset="50%" stopColor="#eab308" />
+              <stop offset="100%" stopColor="#ef4444" />
             </linearGradient>
           </defs>
           <path 
@@ -46,7 +45,6 @@ const EcoStressGauge = ({ value, className }: { value: number; className?: strin
           />
         </svg>
 
-        {/* Needle */}
         <div 
           className="absolute bottom-0 left-1/2 w-1 h-12 -ml-0.5 bg-slate-900 dark:bg-white rounded-full origin-bottom transition-transform duration-1000 cubic-bezier(0.34, 1.56, 0.64, 1)"
           style={{ transform: `rotate(${rotation}deg)` }}
@@ -207,17 +205,17 @@ const DestinationDetail = () => {
             
             <div className="grid grid-cols-2 gap-3 flex-1">
               <Link 
-                to={`/guides/${destination.id}`}
+                to={`/book/${destination.id}`}
                 className="flex items-center justify-center gap-2 p-5 bg-[#2563eb] text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-blue-700 transition-colors shadow-lg"
               >
-                <UsersRound size={16} />
-                Hire Guide
+                <Ticket size={16} />
+                Book My Trip
               </Link>
               <Link 
                 to={`/ai-chat/${destination.id}`}
                 className={`flex items-center justify-center gap-2 p-5 rounded-2xl font-black text-xs uppercase tracking-widest transition-all shadow-lg ${
                   isPremium 
-                    ? 'bg-[#5c4033] text-white hover:bg-[#4a332a]' // Truth Mode Brown
+                    ? 'bg-[#5c4033] text-white hover:bg-[#4a332a]' 
                     : 'bg-amber-100 text-amber-800 border border-amber-200'
                 }`}
               >

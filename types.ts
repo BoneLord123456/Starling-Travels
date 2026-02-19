@@ -8,39 +8,46 @@ export interface Destination {
   image: string;
   status: DestinationStatus;
   metrics: {
-    airQualityAQI: number; // AQI (0-500+)
-    waterPPM: number; // Parts Per Million contaminants
-    soilPPM: number; // Soil contamination (Stress 0-100 for live)
-    noiseDB: number; // Decibels (Stress 0-100 for live)
-    crowdDensity: number; // People per m²
-    infraLoad: number; // % (realistic infrastructure utilization)
-    temperature: number; // Degrees Celsius
-    ecoStress: number; // Aggregate stress 0-100
+    airQualityAQI: number;
+    waterPPM: number;
+    soilPPM: number;
+    noiseDB: number;
+    crowdDensity: number;
+    infraLoad: number;
+    temperature: number;
+    ecoStress: number;
   };
   localSignals: string[]; 
   communityFeedback: CommunityComment[];
   tags: string[];
   description: string;
   baseCostPerDay: number;
-  isRiskDropping?: boolean; // Premium alert feature
+  isRiskDropping?: boolean;
+  coordinates?: { lat: number; lng: number }; // Added for maps
 }
 
-export interface TravelRoute {
+export type ComfortLevel = 'Standard' | 'Premium' | 'Eco-Luxury';
+export type TripStatus = 'Upcoming' | 'In Transit' | 'Completed' | 'Cancelled';
+
+export interface Booking {
   id: string;
-  type: 'road' | 'rail' | 'air' | 'mixed';
-  time: string;
-  ecoScore: number; // Higher is better (efficiency)
-  crowdLevel: number; // Higher is worse
-  comfort: number;
-  safety: number;
-  price: number;
-}
-
-export interface ExperiencePreview {
-  foodImg: string;
-  accommodationImg: string;
-  livingConditionsImg: string;
-  description: string;
+  guideId: string;
+  destinationId: string;
+  date: string;
+  time?: string;
+  travelers: number;
+  pickupLocation: string;
+  pickupCoords?: { lat: number; lng: number };
+  duration: number; // days
+  comfortLevel: ComfortLevel;
+  minPrice: number;
+  contribution: number;
+  status: TripStatus;
+  carbonFootprint: number;
+  ecoPointsEarned: number;
+  distanceKm?: number;
+  refundAmount?: number;
+  offsetCarbon?: boolean;
 }
 
 export interface CommunityComment {
@@ -65,26 +72,23 @@ export interface TourGuide {
   bio: string;
 }
 
-export interface Booking {
-  id: string;
-  guideId: string;
-  destinationId: string;
-  date: string;
-  status: 'pending' | 'paid' | 'completed';
-}
-
 export interface User {
   name: string;
   email: string;
-  passwordHash?: string; // Simulated secure storage
+  passwordHash?: string;
   isPremium: boolean;
   joinedDate: string;
+  ecoPoints: number;
+  loyaltyTier: 'Green Explorer' | 'Earth Guardian' | 'Planet Partner';
 }
 
-export interface UserProfile extends User {
-  theme: 'light' | 'dark' | 'system';
-  bookings: Booking[];
-  badges: string[];
-  ecoImpactRating: number;
-  waterBottlesEarned: number;
+export interface TravelRoute {
+  id: string;
+  type: 'rail' | 'air' | 'road' | 'mixed';
+  time: string;
+  ecoScore: number;
+  crowdLevel: number;
+  comfort: number;
+  safety: number;
+  price: number;
 }

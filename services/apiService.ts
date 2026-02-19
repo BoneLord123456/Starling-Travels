@@ -1,19 +1,17 @@
 
-import { Destination, User, TourGuide, DestinationStatus } from '../types';
+import { Destination, User, TourGuide, DestinationStatus, Booking, TripStatus } from '../types';
 import { MOCK_DESTINATIONS, MOCK_GUIDES } from '../constants';
 
 const GOOGLE_SHEET_BASE_URL = 'https://docs.google.com/spreadsheets/d/1OE7X1_M6obW9You92p-wm33jmNnUbhEZwyUdXSvstIk/export?format=csv';
 const DEMO_PLACE_ID = 'demo-place-live';
 
 export const apiService = {
-  // Helper to clean numeric values from sheet
   cleanNum(val: string): number {
     if (!val) return 0;
     const cleaned = val.replace(/[^0-9.]/g, '');
     return parseFloat(cleaned) || 0;
   },
 
-  // Map sheet status to internal app status
   mapStatus(sheetStatus: string): DestinationStatus {
     const s = sheetStatus?.toLowerCase() || '';
     if (s.includes('critical') || s.includes('danger')) return 'Risky';
@@ -24,7 +22,6 @@ export const apiService = {
     return 'Recommended';
   },
 
-  // --- AUTHENTICATION ---
   async login(email: string, passwordHash: string): Promise<User | null> {
     const saved = localStorage.getItem('ecobalance-user');
     if (saved) {
@@ -37,16 +34,49 @@ export const apiService = {
   },
 
   async signup(userData: User): Promise<User> {
-    localStorage.setItem('ecobalance-user', JSON.stringify(userData));
-    return userData;
+    const user: User = { ...userData, ecoPoints: 0, loyaltyTier: 'Green Explorer' };
+    localStorage.setItem('ecobalance-user', JSON.stringify(user));
+    return user;
   },
 
   async logout(): Promise<void> {
     localStorage.removeItem('ecobalance-user');
     localStorage.removeItem('starling-premium');
+    localStorage.removeItem('ecobalance-bookings');
   },
 
-  // --- GOOGLE SHEETS SYNC ---
+  async saveBooking(booking: Booking): Promise<void> {
+    const bookings = JSON.parse(localStorage.getItem('ecobalance-bookings') || '[]');
+    bookings.push(booking);
+    localStorage.setItem('ecobalance-bookings', JSON.stringify(bookings));
+    
+    const user = JSON.parse(localStorage.getItem('ecobalance-user') || '{}');
+    if (user.name) {
+      user.ecoPoints = (user.ecoPoints || 0) + booking.ecoPointsEarned;
+      if (user.ecoPoints > 1000) user.loyaltyTier = 'Planet Partner';
+      else if (user.ecoPoints > 500) user.loyaltyTier = 'Earth Guardian';
+      localStorage.setItem('ecobalance-user', JSON.stringify(user));
+    }
+  },
+
+  async cancelBooking(bookingId: string, refundAmount: number): Promise<void> {
+    const bookings: Booking[] = JSON.parse(localStorage.getItem('ecobalance-bookings') || '[]');
+    const updated = bookings.map(b => 
+      b.id === bookingId ? { ...b, status: 'Cancelled' as TripStatus, refundAmount } : b
+    );
+    localStorage.setItem('ecobalance-bookings', JSON.stringify(updated));
+  },
+
+  async getBookings(): Promise<Booking[]> {
+    return JSON.parse(localStorage.getItem('ecobalance-bookings') || '[]');
+  },
+
+  async getActiveBooking(): Promise<Booking | null> {
+    const bookings = await this.getBookings();
+    const active = bookings.filter(b => b.status !== 'Cancelled' && b.status !== 'Completed');
+    return active.length > 0 ? active[active.length - 1] : null;
+  },
+
   async fetchLiveDemoData(): Promise<Partial<Destination> & { lastSync: string } | null> {
     try {
       const cacheBuster = `&t=${Date.now()}`;
@@ -54,43 +84,26 @@ export const apiService = {
         cache: 'no-store',
         headers: { 'Pragma': 'no-cache', 'Cache-Control': 'no-cache' }
       });
-      
       if (!response.ok) throw new Error('Failed to fetch Google Sheet');
-      
       const text = await response.text();
       const allRows = text.split(/\r?\n/).filter(row => row.trim().length > 0).map(row => {
         return row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(cell => 
           cell.replace(/^"|"$/g, '').trim()
         );
       });
-      
       if (allRows.length < 2) return null;
-      
-      /**
-       * MAPPING BASED ON USER SCREENSHOT:
-       * Index 0 (A): Time
-       * Index 1 (B): SoundRaw
-       * Index 2 (C): SoilRaw
-       * Index 3 (D): SoundStress -> noiseDB (Reading out of 100)
-       * Index 4 (E): SoilStress -> soilPPM (Reading out of 100)
-       * Index 5 (F): EcoStress -> ecoStress (Gauge out of 100)
-       * Index 6 (G): Status
-       * Index 7 (H): Advisory
-       */
-      
       const latestData = allRows[allRows.length - 1];
       const demoMock = MOCK_DESTINATIONS.find(d => d.id === DEMO_PLACE_ID);
-      
       return {
         metrics: {
           airQualityAQI: demoMock?.metrics.airQualityAQI || 20,
           waterPPM: demoMock?.metrics.waterPPM || 50,
-          soilPPM: this.cleanNum(latestData[4]), // Use SoilStress (Col E)
-          noiseDB: this.cleanNum(latestData[3]), // Use SoundStress (Col D)
+          soilPPM: this.cleanNum(latestData[4]),
+          noiseDB: this.cleanNum(latestData[3]),
           crowdDensity: demoMock?.metrics.crowdDensity || 0.2,
           infraLoad: demoMock?.metrics.infraLoad || 20,
-          ecoStress: this.cleanNum(latestData[5]), // Use EcoStress (Col F)
-          temperature: 24.5, // Mock value as per user request for "normal" demo values
+          ecoStress: this.cleanNum(latestData[5]),
+          temperature: 24.5,
         },
         status: this.mapStatus(latestData[6]),
         lastSync: latestData[0] || new Date().toLocaleTimeString(),
@@ -102,41 +115,19 @@ export const apiService = {
     }
   },
 
-  // --- DESTINATIONS ---
   async getDestinations(): Promise<Destination[]> {
     const liveData = await this.fetchLiveDemoData();
-    
     return MOCK_DESTINATIONS.map(d => {
-      const baseMetrics = d.metrics || {
-        airQualityAQI: 20,
-        waterPPM: 30,
-        soilPPM: 10,
-        noiseDB: 40,
-        crowdDensity: 0.2,
-        infraLoad: 15,
-        temperature: 22,
-        ecoStress: 10
-      };
-
+      const baseMetrics = d.metrics;
       if (d.id === DEMO_PLACE_ID && liveData) {
         return { 
           ...d, 
           metrics: { ...baseMetrics, ...liveData.metrics }, 
           status: liveData.status || d.status,
           localSignals: liveData.localSignals || d.localSignals,
-          description: `Live Feed Active. Last reading: ${liveData.lastSync}`
         } as Destination;
       }
-      
-      // Ensure all destinations have the new metrics fields
-      return {
-        ...d,
-        metrics: {
-          ...baseMetrics,
-          temperature: baseMetrics.temperature || 22,
-          ecoStress: baseMetrics.ecoStress || 15
-        }
-      } as Destination;
+      return d;
     });
   },
 

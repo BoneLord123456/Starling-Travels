@@ -2,6 +2,7 @@
   "name": "EcoBalance",
   "description": "EcoBalance: AI-powered sustainable tourism platform guiding travelers toward lower-impact destinations with raw sensor data and real-time environmental metrics.",
   "requestFramePermissions": [
-    "camera"
+    "camera",
+    "geolocation"
   ]
 }

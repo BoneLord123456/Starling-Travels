@@ -15,6 +15,8 @@ import TripOptimizer from './views/TripOptimizer';
 import Premium from './views/Premium';
 import Settings from './views/Settings';
 import Onboarding from './views/Onboarding';
+import BookingFlow from './views/BookingFlow';
+import TripDashboard from './views/TripDashboard';
 import { User } from './types';
 import { apiService } from './services/apiService';
 
@@ -35,7 +37,9 @@ const App: React.FC = () => {
     const newUser: User = {
       ...userData,
       isPremium: false,
-      joinedDate: new Date().toISOString()
+      joinedDate: new Date().toISOString(),
+      ecoPoints: 0,
+      loyaltyTier: 'Green Explorer'
     };
     const savedUser = await apiService.signup(newUser);
     setUser(savedUser);
@@ -63,6 +67,8 @@ const App: React.FC = () => {
           <Route path="/" element={<Discover />} />
           <Route path="/destination/:id" element={<DestinationDetail />} />
           <Route path="/plan/:destId" element={<TripOptimizer />} />
+          <Route path="/book/:destId" element={<BookingFlow />} />
+          <Route path="/trip-dashboard" element={<TripDashboard />} />
           <Route path="/waste" element={<WasteSubmission />} />
           <Route path="/leaderboard" element={<Leaderboard />} />
           <Route path="/profile" element={<Profile />} />
