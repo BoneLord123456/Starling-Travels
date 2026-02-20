@@ -2,8 +2,8 @@ import { Destination, TourGuide, TravelRoute, CommunityComment } from './types';
 
 // Helper for mock feedback
 const getFeedback = (destName: string): CommunityComment[] => [
-  { id: `${destName}-f1`, user: 'EcoTraveler', comment: `Amazing experience in ${destName}. Very clean and safe.`, date: '2024-03-10', rating: 5 },
-  { id: `${destName}-f2`, user: 'GlobalNomad', comment: `Great spots but slightly crowded near the main landmarks.`, date: '2024-03-05', rating: 4 }
+  { id: `${destName}-f1`, userName: 'EcoTraveler', comment: `Amazing experience in ${destName}. Very clean and safe.`, date: '2024-03-10', rating: 5 },
+  { id: `${destName}-f2`, userName: 'GlobalNomad', comment: `Great spots but slightly crowded near the main landmarks.`, date: '2024-03-05', rating: 4 }
 ];
 
 // Helper to generate consistent yet varied metrics for large lists

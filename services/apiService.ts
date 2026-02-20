@@ -23,20 +23,38 @@ export const apiService = {
   },
 
   async login(email: string, passwordHash: string): Promise<User | null> {
-    const saved = localStorage.getItem('ecobalance-user');
-    if (saved) {
-      const user = JSON.parse(saved);
-      if (user.email === email && user.passwordHash === passwordHash) {
-        return user;
-      }
+    try {
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, passwordHash })
+      });
+      if (!response.ok) return null;
+      const user = await response.json();
+      localStorage.setItem('ecobalance-user', JSON.stringify(user));
+      if (user.isPremium) localStorage.setItem('starling-premium', 'true');
+      return user;
+    } catch (error) {
+      console.error('Login error:', error);
+      return null;
     }
-    return null;
   },
 
-  async signup(userData: User): Promise<User> {
-    const user: User = { ...userData, ecoPoints: 0, loyaltyTier: 'Green Explorer' };
-    localStorage.setItem('ecobalance-user', JSON.stringify(user));
-    return user;
+  async signup(userData: User): Promise<User | null> {
+    try {
+      const response = await fetch('/api/auth/signup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(userData)
+      });
+      if (!response.ok) return null;
+      const user = await response.json();
+      localStorage.setItem('ecobalance-user', JSON.stringify(user));
+      return user;
+    } catch (error) {
+      console.error('Signup error:', error);
+      return null;
+    }
   },
 
   async logout(): Promise<void> {
@@ -134,6 +152,67 @@ export const apiService = {
   async getDestinationById(id: string): Promise<Destination | undefined> {
     const destinations = await this.getDestinations();
     return destinations.find(d => d.id === id);
+  },
+
+  async getLeaderboard(): Promise<{ name: string; points: number }[]> {
+    try {
+      const response = await fetch('/api/leaderboard');
+      if (!response.ok) return [];
+      return await response.json();
+    } catch (error) {
+      console.error('Leaderboard error:', error);
+      return [];
+    }
+  },
+
+  async addPoints(email: string, points: number): Promise<void> {
+    try {
+      const response = await fetch('/api/users/points', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, points })
+      });
+      if (response.ok) {
+        const user = await response.json();
+        localStorage.setItem('ecobalance-user', JSON.stringify(user));
+      }
+    } catch (error) {
+      console.error('Add points error:', error);
+    }
+  },
+
+  async getReviews(destId: string): Promise<any[]> {
+    try {
+      const response = await fetch(`/api/reviews/${destId}`);
+      if (!response.ok) return [];
+      return await response.json();
+    } catch (error) {
+      console.error('Get reviews error:', error);
+      return [];
+    }
+  },
+
+  async addReview(destId: string, userName: string, comment: string, rating: number): Promise<void> {
+    try {
+      await fetch('/api/reviews', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ destId, userName, comment, rating })
+      });
+    } catch (error) {
+      console.error('Add review error:', error);
+    }
+  },
+
+  async getWeather(query: string): Promise<any> {
+    try {
+      const response = await fetch(`/api/weather?q=${encodeURIComponent(query)}`);
+      if (!response.ok) return null;
+      return await response.json();
+    } catch (error) {
+      console.error('Weather error:', error);
+      return null;
+    }
   },
 
   async updatePremiumStatus(isPremium: boolean): Promise<void> {

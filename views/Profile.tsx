@@ -22,8 +22,8 @@ const Profile = () => {
 
   const stats = [
     { label: 'Eco Points', value: `${user.ecoPoints || 0}`, icon: <Zap className="text-amber-500" /> },
-    { label: 'Eco Impact', value: '45.2kg', icon: <TreePine className="text-emerald-500" /> },
-    { label: 'Bottles Earned', value: `${bottles}`, icon: <Droplets className="text-blue-500" /> },
+    { label: 'Eco Impact', value: `${((user.ecoPoints || 0) * 0.45).toFixed(1)}kg`, icon: <TreePine className="text-emerald-500" /> },
+    { label: 'Bottles Earned', value: `${Math.floor((user.ecoPoints || 0) / 10)}`, icon: <Droplets className="text-blue-500" /> },
   ];
 
   const weeklyChallenges = [

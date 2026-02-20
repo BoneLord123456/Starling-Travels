@@ -5,7 +5,7 @@ import { MOCK_DESTINATIONS } from '../constants';
 import { apiService } from '../services/apiService';
 import ScoreBadge from '../components/ScoreBadge';
 import { getDestinationAIOverview } from '../services/geminiService';
-import { Wind, Droplets, Users, ShieldCheck, Sparkles, Loader2, Megaphone, MessageSquare, Star, UsersRound, MessageCircleWarning, Map, Lock, Crown, ArrowLeft, Volume2, Activity, Zap, Send, Thermometer, Ticket } from 'lucide-react';
+import { Wind, Droplets, Users, ShieldCheck, Sparkles, Loader2, Megaphone, MessageSquare, Star, UsersRound, MessageCircleWarning, Map, Lock, Crown, ArrowLeft, Volume2, Activity, Zap, Send, Thermometer, Ticket, CloudSun, CloudRain, Sun } from 'lucide-react';
 import { Destination, CommunityComment } from '../types';
 
 const EcoStressGauge = ({ value, className }: { value: number; className?: string }) => {
@@ -74,14 +74,28 @@ const DestinationDetail = () => {
   const [reviewText, setReviewText] = useState('');
   const [reviewRating, setReviewRating] = useState(5);
   const [submittingReview, setSubmittingReview] = useState(false);
+  const [weather, setWeather] = useState<any>(null);
+  const [loadingWeather, setLoadingWeather] = useState(false);
 
   const isLive = id === 'demo-place-live';
+  const demoCoords = "25.6086,91.8976";
 
   const fetchDestinationData = useCallback(async () => {
     if (!id) return;
     const data = await apiService.getDestinationById(id);
     if (data) {
       setDestination({...data});
+      
+      // Fetch Reviews
+      const reviews = await apiService.getReviews(id);
+      setDestination(prev => prev ? { ...prev, communityFeedback: reviews } : prev);
+
+      // Fetch Weather
+      setLoadingWeather(true);
+      const weatherQuery = id === 'demo-place-live' ? demoCoords : data.name;
+      const weatherData = await apiService.getWeather(weatherQuery);
+      setWeather(weatherData);
+      setLoadingWeather(false);
     }
   }, [id]);
 
@@ -129,20 +143,19 @@ const DestinationDetail = () => {
     if (!reviewText.trim() || !destination) return;
     
     setSubmittingReview(true);
-    await new Promise(r => setTimeout(r, 800));
+    const user = JSON.parse(localStorage.getItem('ecobalance-user') || '{}');
+    const userName = user.name || 'Anonymous';
     
-    const newComment: CommunityComment = {
-      id: Date.now().toString(),
-      user: 'You',
-      comment: reviewText,
-      date: new Date().toISOString().split('T')[0],
-      rating: reviewRating
-    };
-    
-    setDestination({
-      ...destination,
-      communityFeedback: [newComment, ...destination.communityFeedback]
-    });
+    if (id) {
+      await apiService.addReview(id, userName, reviewText, reviewRating);
+      
+      // Refresh reviews
+      const reviews = await apiService.getReviews(id);
+      setDestination({
+        ...destination,
+        communityFeedback: reviews
+      });
+    }
     
     setReviewText('');
     setReviewRating(5);
@@ -243,6 +256,43 @@ const DestinationDetail = () => {
             </div>
           </section>
         )}
+
+        {/* Weather Forecast */}
+        <section className="bg-blue-50 dark:bg-blue-950/30 border border-blue-100 dark:border-blue-900/50 rounded-2xl p-6 shadow-sm">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2 text-blue-800 dark:text-blue-400 font-black uppercase text-[10px] tracking-widest">
+              <CloudSun size={14} />
+              <span>Real-time Weather Forecast</span>
+            </div>
+            {weather && (
+              <div className="text-[10px] font-bold text-blue-600 dark:text-blue-400 uppercase">
+                {weather.location.name}, {weather.location.country}
+              </div>
+            )}
+          </div>
+
+          {loadingWeather ? (
+            <div className="flex items-center gap-3 py-4 text-blue-600 dark:text-blue-400">
+              <Loader2 size={24} className="animate-spin" />
+              <span className="font-medium">Syncing with Weather Satellites...</span>
+            </div>
+          ) : weather ? (
+            <div className="grid grid-cols-3 gap-4">
+              {weather.forecast.forecastday.map((day: any, idx: number) => (
+                <div key={idx} className="bg-white/50 dark:bg-white/5 p-3 rounded-xl border border-blue-100 dark:border-blue-900/50 text-center space-y-1">
+                  <div className="text-[9px] font-black text-slate-400 uppercase tracking-tighter">
+                    {idx === 0 ? 'Today' : new Date(day.date).toLocaleDateString('en-US', { weekday: 'short' })}
+                  </div>
+                  <img src={day.day.condition.icon} alt={day.day.condition.text} className="w-10 h-10 mx-auto" />
+                  <div className="text-sm font-black text-slate-800 dark:text-white">{day.day.avgtemp_c}°C</div>
+                  <div className="text-[8px] font-bold text-slate-500 dark:text-slate-400 truncate">{day.day.condition.text}</div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-xs text-slate-500">Weather data unavailable.</p>
+          )}
+        </section>
 
         {/* AI Analysis */}
         <section className="bg-indigo-50 dark:bg-indigo-950/30 border border-indigo-100 dark:border-indigo-900/50 rounded-2xl p-6 relative overflow-hidden shadow-sm">
@@ -390,10 +440,10 @@ const DestinationDetail = () => {
               <div key={fb.id} className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm flex flex-col gap-3 animate-in fade-in slide-in-from-top-2 duration-300">
                 <div className="flex justify-between items-center">
                   <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center font-black text-[10px] text-slate-500">
-                      {fb.user.substring(0, 1)}
+                    <div className="w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center font-black text-[10px] text-slate-500 overflow-hidden">
+                      <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${fb.userName}`} alt="" className="w-full h-full object-cover" />
                     </div>
-                    <span className="font-bold text-slate-700 dark:text-slate-200 text-sm">{fb.user}</span>
+                    <span className="font-bold text-slate-700 dark:text-slate-200 text-sm">{fb.userName}</span>
                   </div>
                   <div className="flex gap-0.5 text-amber-400">
                     {[...Array(5)].map((_, i) => <Star key={i} size={12} fill={i < fb.rating ? "currentColor" : "none"} />)}

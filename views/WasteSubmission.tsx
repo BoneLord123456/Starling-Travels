@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { Camera, Recycle, CheckCircle2, Info, Loader2, Sparkles, Receipt, Droplets, MapPin } from 'lucide-react';
 import { analyzeWasteImage } from '../services/geminiService';
 import { MOCK_DESTINATIONS } from '../constants';
+import { apiService } from '../services/apiService';
 
 const WasteSubmission = () => {
   const [step, setStep] = useState(1);
@@ -19,6 +20,13 @@ const WasteSubmission = () => {
     const bottles = Math.floor(res.weightKg / 0.5);
     const currentBottles = parseInt(localStorage.getItem('starling-bottles') || '0');
     localStorage.setItem('starling-bottles', (currentBottles + bottles).toString());
+    
+    // Update backend points
+    const user = JSON.parse(localStorage.getItem('ecobalance-user') || '{}');
+    if (user.email) {
+      await apiService.addPoints(user.email, bottles * 10); // 10 points per bottle
+    }
+    
     window.dispatchEvent(new Event('storage'));
 
     setIsAnalyzing(false);

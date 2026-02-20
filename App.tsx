@@ -42,7 +42,12 @@ const App: React.FC = () => {
       loyaltyTier: 'Green Explorer'
     };
     const savedUser = await apiService.signup(newUser);
-    setUser(savedUser);
+    if (savedUser) {
+      setUser(savedUser);
+    } else {
+      // Handle signup error (e.g., email already exists)
+      alert('Signup failed. Email might already be in use.');
+    }
   };
 
   const handleLogin = async (email: string, passwordHash: string) => {

@@ -61,7 +61,7 @@ export interface Booking {
 
 export interface CommunityComment {
   id: string;
-  user: string;
+  userName: string;
   comment: string;
   date: string;
   rating: number;

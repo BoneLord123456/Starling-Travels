@@ -2,8 +2,8 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { Destination } from "../types";
 
-// Always use new GoogleGenAI({ apiKey: process.env.API_KEY }) directly.
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+// Always use new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY }) directly.
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 export const getDestinationAIOverview = async (destination: Destination, alternatives: Destination[]) => {
   const prompt = `
@@ -49,7 +49,7 @@ export const getDestinationAIOverview = async (destination: Destination, alterna
       }
     });
 
-    return JSON.parse(response.text);
+    return JSON.parse(response.text || '{}');
   } catch (error) {
     console.error("Gemini Error:", error);
     return null;
@@ -98,7 +98,7 @@ export const getTripOptimizationInsight = async (destination: Destination, budge
         }
       }
     });
-    return JSON.parse(response.text);
+    return JSON.parse(response.text || '{}');
   } catch (error) {
     console.error("Optimization Error:", error);
     return null;
@@ -166,7 +166,7 @@ export const analyzeWasteImage = async (base64Image: string) => {
         }
       }
     });
-    return JSON.parse(response.text);
+    return JSON.parse(response.text || '{}');
   } catch (error) {
     console.error("Gemini Image Analysis Error:", error);
     return null;
